@@ -1,4 +1,4 @@
-const CACHE = "zw-v1";
+const CACHE = "zw-v2";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", function (e) {
