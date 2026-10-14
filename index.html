@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>我的复习本</title>
+<style>
+:root{--bg:#0f1115;--card:#1a1d24;--fg:#e8eaf0;--dim:#8b93a7}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,"PingFang SC",system-ui,sans-serif;
+min-height:100dvh;display:flex;flex-direction:column;justify-content:center;
+padding:28px 22px calc(28px + env(safe-area-inset-bottom))}
+h1{font-size:23px;margin:0 0 6px}
+p.sub{color:var(--dim);font-size:13.5px;margin:0 0 26px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border-radius:18px;
+padding:20px;margin-bottom:14px;border:1px solid #23262f;transition:transform .08s}
+a.card:active{transform:scale(.985)}
+a.card .n{font-size:20px;font-weight:700;margin-bottom:4px}
+a.card .d{color:var(--dim);font-size:13px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:2px}
+</style>
+</head>
+<body>
+<h1>我的复习本</h1>
+<p class="sub">两个 App 都能加到主屏幕，离线也能用</p>
+<a class="card" href="politics/">
+  <div class="n"><span class="dot" style="background:#e0453a"></span>政治抽问</div>
+  <div class="d">339 道客观题 · 挖空 / 反向 / 选词填空 / 判断题</div>
+</a>
+<a class="card" href="words/">
+  <div class="n"><span class="dot" style="background:#2E5BFF"></span>背单词</div>
+  <div class="d">1929 个核心词 · 选意思 / 选单词 / 默写</div>
+</a>
+</body>
+</html>
