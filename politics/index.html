@@ -218,6 +218,28 @@ footer{
 .dueline b{color:var(--amber);font-weight:600}
 .dueline .st{color:var(--amber);letter-spacing:1px}
 .empty{text-align:center;color:var(--tx3);padding:60px 20px;font-size:15px;line-height:1.9}
+.io{
+  position:fixed;inset:0;z-index:60;display:none;
+  background:rgba(0,0,0,.74);
+  padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 14px);
+}
+.io.on{display:flex;align-items:center;justify-content:center}
+.iobox{
+  width:100%;max-width:560px;max-height:100%;background:#1a1d24;border-radius:18px;
+  padding:16px;display:flex;flex-direction:column;gap:10px;border:1px solid #262a33;
+}
+.iohd{display:flex;align-items:center;justify-content:space-between;flex:none}
+.iohd b{font-size:16px}
+.iohd button{
+  background:rgba(255,255,255,.09);border:0;color:var(--tx);border-radius:9px;
+  padding:6px 13px;font-size:13px;font-family:inherit;
+}
+.iohint{font-size:12.5px;color:var(--tx2);line-height:1.6;flex:none}
+#ioText{
+  flex:1;min-height:150px;max-height:50vh;width:100%;resize:none;box-sizing:border-box;
+  background:#0c0e12;color:var(--tx);border:1px solid #262a33;border-radius:11px;padding:10px;
+  font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;
+}
 </style>
 </head>
 <body>
@@ -271,10 +293,25 @@ footer{
   <div class="stat" id="statBox"></div>
   <div class="forecast" id="forecastBox"></div>
   <div class="rowbtns">
+    <button class="btn sm" style="width:auto;flex:1" id="btnExport">导出进度</button>
+    <button class="btn sm" style="width:auto;flex:1" id="btnImport">导入进度</button>
+  </div>
+  <div class="rowbtns">
     <button class="btn sm" style="width:auto;flex:1" id="btnReset">清空全部进度</button>
     <button class="btn primary" style="flex:2" id="btnClose">开始抽问</button>
   </div>
   <div class="hint" id="hintBox"></div>
+</div>
+
+<div class="io" id="io">
+  <div class="iobox">
+    <div class="iohd"><b id="ioTitle">导出进度</b><button id="ioX">关闭</button></div>
+    <div class="iohint" id="ioHint"></div>
+    <textarea id="ioText" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off"></textarea>
+    <div class="rowbtns">
+      <button class="btn primary" style="flex:1" id="ioDo">复制</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -286,7 +323,7 @@ const Q = [{"id":"d8ce4065","part":"马原","section":"导论","stem":"标志着
 const PARTS = ["马原", "毛中特·习思想", "史纲", "思想道德与法治", "形势与政策"];
 const PARTCLS = {"马原": "p1", "毛中特·习思想": "p2", "史纲": "p3", "思想道德与法治": "p4", "形势与政策": "p5"};
 const KEY = "zz_state_v1";
-const APPVER = "2026-10-14 · v12";
+const APPVER = "2026-10-15 · v13";
 
 /* ============================================================
    状态
@@ -1029,6 +1066,8 @@ document.getElementById("btnReset").onclick = function () {
   st = {}; stat = { done: 0, ok: 0, bad: 0, lastDay: "", streak: 0 };
   save(); renderSheet();
 };
+document.getElementById("btnExport").onclick = showExport;
+document.getElementById("btnImport").onclick = showImport;
 document.getElementById("btnStar").onclick = function () {
   if (!pool.length) return;
   const q = pool[idx];
@@ -1038,6 +1077,150 @@ document.getElementById("btnStar").onclick = function () {
   document.getElementById("btnStar").textContent = s.star ? "★" : "☆";
   document.getElementById("btnStar").style.color = s.star ? "var(--amber)" : "var(--tx2)";
 };
+
+/* ============================================================
+   进度导出 / 导入
+   ============================================================ */
+const PROG_BASE = Date.UTC(2020, 0, 1);
+const PROG_DAY = 86400000;
+
+function cfgArr() { return cfg.parts || cfg.lists || []; }
+function setCfgArr(v) { if (cfg.parts) cfg.parts = v; else cfg.lists = v; }
+
+function exportText() {
+  const L = [];
+  L.push("ZZ1");
+  L.push([stat.streak | 0, stat.lastDay || "", stat.done | 0, stat.ok | 0, stat.bad | 0].join(","));
+  const H = stat.history || {};
+  L.push(Object.keys(H).sort().map(function (k) { return k + ":" + H[k]; }).join(","));
+  L.push([cfg.scope, cfg.mode, cfg.newPerDay == null ? "" : cfg.newPerDay].join(","));
+  L.push(cfgArr().join("|"));
+  Object.keys(st).forEach(function (id) {
+    const s = st[id];
+    if (!s || !s.seen) return;
+    let d = 0;
+    if (s.due) {
+      const t = Date.parse(s.due + "T00:00:00Z");
+      if (!isNaN(t)) d = Math.round((t - PROG_BASE) / PROG_DAY);
+    }
+    L.push([id, s.ok | 0, s.bad | 0, s.star ? 1 : 0, s.seen | 0,
+            Math.round((s.ef || 2.5) * 10), s.ivl | 0, s.reps | 0, d].join(","));
+  });
+  return L.join("\n");
+}
+
+function importText(txt) {
+  const lines = String(txt || "").replace(/\r/g, "").split("\n");
+  let i = 0;
+  while (i < lines.length && !lines[i].trim()) i++;
+  if (!lines[i] || lines[i].trim() !== "ZZ1") throw new Error("这串码不像本 App 导出的进度");
+  i++;
+  const a = (lines[i++] || "").split(",");
+  stat.streak = parseInt(a[0], 10) || 0;
+  stat.lastDay = a[1] || "";
+  stat.done = parseInt(a[2], 10) || 0;
+  stat.ok = parseInt(a[3], 10) || 0;
+  stat.bad = parseInt(a[4], 10) || 0;
+  stat.history = {};
+  (lines[i++] || "").split(",").forEach(function (kv) {
+    const p = kv.split(":");
+    if (p.length === 2 && p[0]) stat.history[p[0]] = parseInt(p[1], 10) || 0;
+  });
+  const c = (lines[i++] || "").split(",");
+  if (c[0]) cfg.scope = c[0];
+  if (c[1]) cfg.mode = c[1];
+  if (c[2]) cfg.newPerDay = parseInt(c[2], 10) || cfg.newPerDay;
+  const ps = (lines[i++] || "").split("|").filter(Boolean);
+  if (ps.length) setCfgArr(ps);
+  let n = 0, merged = 0;
+  for (; i < lines.length; i++) {
+    const f = lines[i].split(",");
+    if (f.length < 9 || !f[0]) continue;
+    let due = "";
+    const dd = parseInt(f[8], 10);
+    if (dd > 0) due = new Date(PROG_BASE + dd * PROG_DAY).toISOString().slice(0, 10);
+    const inc = {
+      ok: parseInt(f[1], 10) || 0, bad: parseInt(f[2], 10) || 0,
+      star: f[3] === "1", seen: parseInt(f[4], 10) || 0,
+      ef: (parseInt(f[5], 10) || 25) / 10, ivl: parseInt(f[6], 10) || 0,
+      reps: parseInt(f[7], 10) || 0, due: due
+    };
+    const cur = st[f[0]];
+    if (cur && cur.seen) {
+      merged++;
+      cur.ok = Math.max(cur.ok || 0, inc.ok);
+      cur.bad = (cur.bad || 0) + inc.bad;
+      cur.star = !!(cur.star || inc.star);
+      cur.seen = Math.max(cur.seen || 0, inc.seen);
+      cur.ef = Math.min(cur.ef || 2.5, inc.ef);
+      cur.ivl = Math.max(cur.ivl || 0, inc.ivl);
+      cur.reps = Math.max(cur.reps || 0, inc.reps);
+      if (inc.due && (!cur.due || inc.due < cur.due)) cur.due = inc.due;
+    } else {
+      st[f[0]] = inc;
+    }
+    n++;
+  }
+  save();
+  return { n: n, merged: merged };
+}
+
+const $io = document.getElementById("io");
+
+function copyIO() {
+  const t = document.getElementById("ioText");
+  t.focus(); t.select();
+  try { t.setSelectionRange(0, 999999); } catch (e) { /* ignore */ }
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  const hint = document.getElementById("ioHint");
+  if (ok) { hint.textContent = "✅ 已复制到剪贴板，去粘贴保存吧"; return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t.value).then(function () {
+      hint.textContent = "✅ 已复制到剪贴板，去粘贴保存吧";
+    }, function () {
+      hint.textContent = "请长按上面的文字手动全选复制";
+    });
+    return;
+  }
+  hint.textContent = "请长按上面的文字手动全选复制";
+}
+
+function showExport() {
+  document.getElementById("ioTitle").textContent = "导出进度";
+  document.getElementById("ioHint").innerHTML =
+    "下面这串码就是你全部的学习记录。<b>复制走存好</b>（微信收藏、备忘录、发给自己都行）。" +
+    "换手机、手机丢了重装、或者哪天数据被清了，把它粘回「导入进度」就能恢复。";
+  document.getElementById("ioText").value = exportText();
+  const btn = document.getElementById("ioDo");
+  btn.textContent = "复制";
+  btn.onclick = copyIO;
+  $io.classList.add("on");
+}
+
+function showImport() {
+  document.getElementById("ioTitle").textContent = "导入进度";
+  document.getElementById("ioHint").innerHTML =
+    "把之前「导出进度」得到的那串码粘到下面，然后点导入。" +
+    "已经做过的题会<b>合并</b>（取更保守的那个状态），不会覆盖你现在的进度。";
+  document.getElementById("ioText").value = "";
+  const btn = document.getElementById("ioDo");
+  btn.textContent = "导入";
+  btn.onclick = function () {
+    const hint = document.getElementById("ioHint");
+    try {
+      const r = importText(document.getElementById("ioText").value);
+      hint.textContent = "✅ 导入成功：读到 " + r.n + " 条记录" +
+        (r.merged ? "，其中 " + r.merged + " 条和你现有的进度做了合并。" : "。");
+      renderSheet();
+    } catch (e) {
+      hint.textContent = "❌ " + e.message;
+    }
+  };
+  $io.classList.add("on");
+}
+
+document.getElementById("ioX").onclick = function () { $io.classList.remove("on"); };
 
 function renderSheet() {
   // 板块
