@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="政治抽问">
+<meta name="theme-color" content="#0f1115">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>政治抽问</title>
+<style>
+:root{
+  --bg:#0f1115; --bg2:#15181f; --card:#1a1d24; --card2:#20242d;
+  --line:#2a2f3a; --tx:#e8eaed; --tx2:#9aa0a6; --tx3:#6b7280;
+  --red:#e0453a; --red2:#ff6b5e; --green:#34c759; --green2:#7ee2a8;
+  --amber:#ff9f0a; --blue:#4a9eff;
+  --sab:env(safe-area-inset-bottom,0px);
+  --sat:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg); color:var(--tx); overflow-x:hidden;
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  overscroll-behavior:none; -webkit-user-select:none; user-select:none;
+}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;padding-top:var(--sat)}
+
+/* ---------- 顶栏 ---------- */
+header{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  padding:10px 14px 8px;border-bottom:1px solid var(--line);background:var(--bg);
+}
+.title{font-size:17px;font-weight:700;letter-spacing:.5px}
+.title small{font-weight:400;color:var(--tx3);font-size:12px;margin-left:6px;letter-spacing:0}
+.spacer{flex:1}
+.chip{
+  border:1px solid var(--line);background:var(--card);color:var(--tx);
+  border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;
+}
+.chip:active{background:var(--card2)}
+.iconbtn{
+  width:38px;height:38px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--tx);font-size:17px;display:flex;
+  align-items:center;justify-content:center;
+}
+.iconbtn:active{background:var(--card2)}
+
+/* ---------- 进度条 ---------- */
+.bar{flex:0 0 auto;height:3px;background:var(--line)}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--red),var(--red2));width:0;transition:width .25s}
+
+/* ---------- 主区 ---------- */
+main{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:18px 16px;min-height:210px;
+}
+.meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:600;color:var(--tx2);background:var(--card2);border-radius:7px;padding:3px 9px}
+.tag.p1{color:#ffb4a8;background:rgba(224,69,58,.16)}
+.tag.p2{color:#ffd9a0;background:rgba(255,159,10,.15)}
+.tag.p3{color:#a8d5ff;background:rgba(74,158,255,.15)}
+.tag.p4{color:#b8f0c9;background:rgba(52,199,89,.15)}
+.tag.p5{color:#dcc4ff;background:rgba(150,110,255,.16)}
+.num{margin-left:auto;font-size:12px;color:var(--tx3);font-variant-numeric:tabular-nums}
+.stars{margin-left:auto;display:flex;gap:6px;align-items:center}
+.star{font-size:16px;opacity:.35}
+.star.on{opacity:1}
+
+.stem{font-size:19px;line-height:1.85;letter-spacing:.2px;word-break:break-word}
+.filled{color:var(--green2);font-weight:600}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.opt{background:#232733;border:1.5px solid #333a47;color:var(--tx);border-radius:12px;padding:12px 10px;
+  font-size:15px;line-height:1.45;font-family:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.opt:active{transform:scale(.985)}
+.opt.right{background:rgba(52,199,89,.18);border-color:var(--green);color:var(--green2)}
+.opt.wrong{background:rgba(224,69,58,.18);border-color:var(--red);color:#ff8a80}
+.opt.dim{opacity:.45}
+.opts.jd .opt{font-size:19px;font-weight:700;padding:22px 0;letter-spacing:1px}
+.stem.rev{font-size:21px;font-weight:600;color:var(--green2)}
+.blank{
+  display:inline-block;width:4.6em;padding:1px 6px;margin:0 2px;text-align:center;
+  border-bottom:2px solid var(--red);color:var(--red2);font-weight:700;
+  border-radius:6px 6px 0 0;vertical-align:baseline;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.blank.on{
+  display:inline;width:auto;max-width:none;white-space:normal;overflow:visible;text-overflow:clip;
+  border-bottom:none;padding:1px 3px;color:var(--green2);font-weight:700;
+  background:rgba(52,199,89,.14);border-radius:4px;cursor:default;
+}
+.blank.hint{
+  color:var(--amber);border-bottom-color:var(--amber);border-bottom-style:dashed;
+  white-space:normal;overflow:visible;text-overflow:clip;cursor:pointer;
+}
+.plain-note{
+  margin-top:14px;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.6;
+  color:var(--tx2);background:var(--card2);border:1px dashed var(--line);
+}
+.reveal-tip{margin-top:14px;font-size:13px;color:var(--tx3);text-align:center}
+.legend{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.legend b{
+  font-weight:600;color:var(--green2);background:rgba(52,199,89,.1);
+  border:1px solid rgba(52,199,89,.25);border-radius:8px;padding:2px 8px;font-size:13px;
+}
+.legend b i{color:var(--tx3);font-style:normal;font-size:11px;margin-right:4px}
+
+/* ---------- 底部按钮 ---------- */
+footer{
+  flex:0 0 auto;padding:10px 14px calc(10px + var(--sab));
+  border-top:1px solid var(--line);background:var(--bg);
+  display:flex;gap:10px;align-items:center;
+}
+.btn{
+  flex:1;height:52px;border-radius:15px;border:1px solid var(--line);background:var(--card);
+  color:var(--tx);font-size:16px;font-weight:700;letter-spacing:.5px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(180deg,var(--red2),var(--red));border-color:transparent;color:#fff}
+.btn.ok{background:rgba(52,199,89,.16);border-color:rgba(52,199,89,.4);color:var(--green2)}
+.btn.no{background:rgba(224,69,58,.14);border-color:rgba(224,69,58,.38);color:#ffb4a8}
+.btn.easy{background:rgba(10,132,255,.14);border-color:rgba(10,132,255,.42);color:#8ec5ff}
+.btn small{display:block;font-size:10px;font-weight:400;opacity:.72;margin-top:1px;letter-spacing:.2px}
+.btn.sm{flex:0 0 auto;width:64px;font-size:15px;font-weight:600;color:var(--tx2)}
+
+/* ---------- 抽屉 / 面板 ---------- */
+.mask{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;
+  transition:opacity .22s;z-index:40;backdrop-filter:blur(2px);
+}
+.mask.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;max-height:88vh;overflow-y:auto;
+  background:var(--bg2);border-top:1px solid var(--line);border-radius:22px 22px 0 0;
+  padding:14px 16px calc(20px + var(--sab));
+  transform:translateY(102%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+}
+.sheet.on{transform:translateY(0)}
+.shd{
+  position:sticky;top:0;z-index:3;
+  display:flex;align-items:center;justify-content:space-between;
+  margin:-14px -16px 6px;padding:14px 16px 10px;
+  background:var(--bg2);border-radius:22px 22px 0 0;
+}
+.shd span{font-size:16px;font-weight:600;color:var(--tx)}
+.shd button{
+  border:none;background:rgba(255,255,255,.09);color:var(--tx);
+  font-size:14px;font-weight:600;padding:7px 16px;border-radius:10px;
+}
+.shd button:active{background:rgba(255,255,255,.18);transform:scale(.97)}
+.sheet h3{margin:6px 0 10px;font-size:15px;color:var(--tx2);font-weight:600}
+.sheet h3:first-child{margin-top:0}
+.grabber{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{
+  flex:1 1 40%;min-height:42px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--tx2);font-size:14px;font-weight:600;padding:6px 10px;
+}
+.seg button.on{background:rgba(224,69,58,.16);border-color:var(--red);color:#ffb4a8}
+.seg button:active{transform:scale(.98)}
+.rowbtns{display:flex;gap:10px;margin-top:6px}
+.rowbtns .btn{height:46px;font-size:15px}
+
+/* ---------- 统计 ---------- */
+.stat{margin-top:4px}
+.stat .line{display:flex;align-items:center;gap:10px;margin:9px 0;font-size:14px}
+.stat .line span:first-child{flex:0 0 92px;color:var(--tx2)}
+.stat .track{flex:1;height:8px;border-radius:4px;background:var(--card);overflow:hidden}
+.stat .track>i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--green2));width:0}
+.stat .line b{flex:0 0 62px;text-align:right;font-variant-numeric:tabular-nums;color:var(--tx2);font-weight:600;font-size:13px}
+.bigstat{display:flex;gap:10px;margin:8px 0 14px}
+.bigstat div{
+  flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:10px;text-align:center;
+}
+.bigstat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.bigstat small{color:var(--tx3);font-size:12px}
+.hint{font-size:12.5px;color:var(--tx3);line-height:1.7;margin-top:10px}
+.daily{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(224,69,58,.16),rgba(150,110,255,.12));
+  border:1px solid rgba(224,69,58,.35);border-radius:14px;
+  padding:10px 13px;margin-bottom:12px;font-size:14px;
+}
+.daily.ok{background:rgba(52,199,89,.12);border-color:rgba(52,199,89,.35)}
+.daily b{color:#ffb4a8;font-weight:700}
+.daily .go{
+  margin-left:auto;background:var(--red);color:#fff;border-radius:10px;
+  padding:5px 12px;font-size:13px;font-weight:700;white-space:nowrap;
+}
+.daily.ok .go{background:rgba(52,199,89,.9)}
+.daily .dtag{
+  background:rgba(255,255,255,.09);border-radius:7px;padding:2px 7px;
+  font-size:12px;color:var(--tx2);white-space:nowrap;
+}
+.slabel{font-size:12.5px;color:var(--tx2);margin:14px 0 6px;letter-spacing:.3px}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.heat i{display:block;aspect-ratio:1;border-radius:3px;background:rgba(255,255,255,.06)}
+.heat i.h1{background:rgba(224,69,58,.32)}
+.heat i.h2{background:rgba(224,69,58,.56)}
+.heat i.h3{background:rgba(224,69,58,.8)}
+.heat i.h4{background:var(--red)}
+.fc{display:flex;align-items:flex-end;gap:6px;height:96px;padding:6px 2px 0}
+.fcb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.fcb b{font-size:11px;color:var(--tx2);line-height:1.3;font-weight:600}
+.fcb i{display:block;width:100%;min-height:2px;background:linear-gradient(180deg,var(--red),#7a1a14);border-radius:4px 4px 0 0}
+.fcb.today i{background:linear-gradient(180deg,#ff8a7a,var(--red))}
+.fcb small{font-size:10px;color:var(--tx3);margin-top:4px;white-space:nowrap}
+.dueline{
+  margin-top:12px;padding-top:11px;border-top:1px dashed rgba(255,255,255,.09);
+  font-size:12.5px;color:var(--tx2);display:flex;justify-content:space-between;gap:8px;
+}
+.dueline b{color:var(--amber);font-weight:600}
+.dueline .st{color:var(--amber);letter-spacing:1px}
+.empty{text-align:center;color:var(--tx3);padding:60px 20px;font-size:15px;line-height:1.9}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title">政治抽问<small id="hdrSub"></small></div>
+    <div class="spacer"></div>
+    <button class="chip" id="btnStar">☆</button>
+    <button class="iconbtn" id="btnSet">⚙</button>
+  </header>
+  <div class="bar"><i id="barFill"></i></div>
+  <main id="main"></main>
+  <footer id="footer"></footer>
+</div>
+
+<div class="mask" id="mask"></div>
+
+<div class="sheet" id="sheet">
+  <div class="shd">
+    <span>设置</span>
+    <button id="btnBack">返回</button>
+  </div>
+  <div class="grabber"></div>
+  <h3>抽哪些板块</h3>
+  <div class="seg" id="segParts"></div>
+  <h3>抽哪一批</h3>
+  <div class="seg" id="segScope">
+    <button data-v="today">今日任务</button>
+    <button data-v="all">全部随机</button>
+    <button data-v="todo">只抽没掌握的</button>
+    <button data-v="weak">只抽错过的</button>
+    <button data-v="star">只抽错题本</button>
+  </div>
+  <h3>出题方式</h3>
+  <div class="seg" id="segMode">
+    <button data-v="cloze">挖空背诵</button>
+    <button data-v="reverse">反向抽问</button>
+    <button data-v="choice">选词填空</button>
+    <button data-v="judge">判断题</button>
+    <button data-v="mix">混合随机</button>
+  </div>
+  <h3>每天新学几道</h3>
+  <div class="seg" id="segNew">
+    <button data-v="10">10 道</button>
+    <button data-v="20">20 道</button>
+    <button data-v="30">30 道</button>
+    <button data-v="999">不限</button>
+  </div>
+  <h3>我的进度</h3>
+  <div class="bigstat" id="bigstat"></div>
+  <div class="stat" id="statBox"></div>
+  <div class="forecast" id="forecastBox"></div>
+  <div class="rowbtns">
+    <button class="btn sm" style="width:auto;flex:1" id="btnReset">清空全部进度</button>
+    <button class="btn primary" style="flex:2" id="btnClose">开始抽问</button>
+  </div>
+  <div class="hint" id="hintBox"></div>
+</div>
+
+<script>
+/* ============================================================
+   题库（构建时注入）
+   ============================================================ */
+const Q = [{"id":"d8ce4065","part":"马原","section":"导论","stem":"标志着马恩完成了从唯心主义向唯物主义、从革命民主主义向共产主义的转变，为马克思主义提供思想前提：{{0}}","answers":["《德法年鉴》"],"raw":"标志着马恩完成了从唯心主义向唯物主义、从革命民主主义向共产主义的转变，为马克思主义提供思想前提：《德法年鉴》","kind":"cloze","legacy":1},{"id":"23735d4b","part":"马原","section":"导论","stem":"马恩第一部合著：{{0}}","answers":["《神圣家族》"],"raw":"马恩第一部合著：《神圣家族》","kind":"cloze","legacy":2},{"id":"43f4430e","part":"马原","section":"导论","stem":"标志着马克思主义公开问世，世界上第一个无产阶级政党的党纲：{{0}}","answers":["《共产党宣言》"],"raw":"标志着马克思主义公开问世，世界上第一个无产阶级政党的党纲：《共产党宣言》","kind":"cloze","legacy":3},{"id":"575ec5eb","part":"马原","section":"导论","stem":"揭示着资本主义剥削的秘密、“工人阶级的圣经”：{{0}}","answers":["《资本论》"],"raw":"揭示着资本主义剥削的秘密、“工人阶级的圣经”：《资本论》","kind":"cloze","legacy":4},{"id":"b125f246","part":"马原","section":"导论","stem":"总结巴黎公社经验：{{0}}","answers":["《法兰西内战》"],"raw":"总结巴黎公社经验：《法兰西内战》","kind":"cloze","legacy":5},{"id":"95aa076a","part":"马原","section":"导论","stem":"马克思主义的本质属性、政治立场：{{0}}","answers":["人民性"],"raw":"马克思主义的本质属性、政治立场：人民性","kind":"cloze","legacy":6},{"id":"7fffd8d3","part":"马原","section":"导论","stem":"马克思主义的首要的、基本的观点、马克思主义区别于其他理论的根本特征：{{0}}","answers":["实践性"],"raw":"马克思主义的首要的、基本的观点、马克思主义区别于其他理论的根本特征：实践性","kind":"cloze","legacy":7},{"id":"c0f7cb39","part":"马原","section":"导论","stem":"马克思主义的基本特征归结为一句话：{{0}}","answers":["科学性和革命性的统一。"],"raw":"马克思主义的基本特征归结为一句话：科学性和革命性的统一。","kind":"cloze","legacy":8},{"id":"c39c72e8","part":"马原","section":"导论","stem":"习近平新时代中国特色社会主义思想的世界观和方法论，继承和发展了辩证唯物主义和历史唯物主义，也是{{0}}。","answers":["继续推进理论创新必须始终坚持的基本点"],"raw":"习近平新时代中国特色社会主义思想的世界观和方法论，继承和发展了辩证唯物主义和历史唯物主义，也是继续推进理论创新必须始终坚持的基本点。","kind":"cloze","legacy":9},{"id":"fbb2eb0d","part":"马原","section":"马哲","stem":"哲学基本问题主要包括两方面内容：{{0}}","answers":["①是存在和思维何为本原的问题，即何者为第一性的问题；②存在和思维是否具有同一性的问题，即世界是否可知的问题"],"raw":"哲学基本问题主要包括两方面内容：①是存在和思维何为本原的问题，即何者为第一性的问题；②存在和思维是否具有同一性的问题，即世界是否可知的问题","kind":"cloze","legacy":10},{"id":"e6f5d326","part":"马原","section":"马哲","stem":"世界发生的二重分化：{{0}}","answers":["①从自然界中分化出人类社会②从客观世界中分化出主观世界"],"raw":"世界发生的二重分化：①从自然界中分化出人类社会②从客观世界中分化出主观世界","kind":"cloze","legacy":11},{"id":"e55590ef","part":"马原","section":"马哲","stem":"物质的唯一特性、共同特性为{{0}}；物质的根本属性和存在方式为{{1}}。","answers":["客观实在性","运动"],"raw":"物质的唯一特性、共同特性为客观实在性；物质的根本属性和存在方式为运动。","kind":"cloze","legacy":12},{"id":"af3a888e","part":"马原","section":"马哲","stem":"物质运动的存在形式为{{0}}。","answers":["时间和空间"],"raw":"物质运动的存在形式为时间和空间。","kind":"cloze","legacy":13},{"id":"398cf32f","part":"马原","section":"马哲","stem":"时间的特点是{{0}}。空间的特点是{{1}}。具体物质形态的时空是{{2}}，整个物质世界的时空是{{3}}。","answers":["一维性","三维性","有限的","无限的"],"raw":"时间的特点是一维性。空间的特点是三维性。具体物质形态的时空是有限的，整个物质世界的时空是无限的。","kind":"cloze","legacy":14},{"id":"f519c78a","part":"马原","section":"马哲","stem":"意识的起源：{{0}}","answers":["①意识是自然界长期发展的产物；②意识也是社会历史发展的产物，其中实践（劳动）起决定作用，语言起促进作用；意识的本质：①意识是人脑特有的机能；②意识是客观世界的主观映象。"],"raw":"意识的起源：①意识是自然界长期发展的产物；②意识也是社会历史发展的产物，其中实践（劳动）起决定作用，语言起促进作用；意识的本质：①意识是人脑特有的机能；②意识是客观世界的主观映象。","kind":"cloze","legacy":15},{"id":"54485fda","part":"马原","section":"马哲","stem":"物质决定意识，意识对物质具有反作用。","answers":[],"raw":"物质决定意识，意识对物质具有反作用。","kind":"plain","legacy":16},{"id":"d17d5c86","part":"马原","section":"马哲","stem":"实践是{{0}}。尊重客观规律是{{1}}。","answers":["客观规律性与主观能动性统一的基础和根本途径","正确发挥主观能动性的前提"],"raw":"实践是客观规律性与主观能动性统一的基础和根本途径。尊重客观规律是正确发挥主观能动性的前提。","kind":"cloze","legacy":17},{"id":"d7f54a77","part":"马原","section":"马哲","stem":"唯物辩证法是{{0}}。","answers":["认识世界和改造世界的根本方法"],"raw":"唯物辩证法是认识世界和改造世界的根本方法。","kind":"cloze","legacy":18},{"id":"ddc04d75","part":"马原","section":"马哲","stem":"联系的特点：{{0}}","answers":["客观性、普遍性、多样性、条件性"],"raw":"联系的特点：客观性、普遍性、多样性、条件性","kind":"cloze","legacy":19},{"id":"b7f82371","part":"马原","section":"马哲","stem":"发展的实质：{{0}}","answers":["新事物的产生和旧事物的灭亡"],"raw":"发展的实质：新事物的产生和旧事物的灭亡","kind":"cloze","legacy":20},{"id":"5d460829","part":"马原","section":"马哲","stem":"新事物不可战胜的原因：{{0}}","answers":["①新事物具有新的结构和功能，②新事物是在旧事物的“母体”中孕育成熟的，并添加了旧事物所不能容纳的新内容，③新事物符合人民群众的利益。"],"raw":"新事物不可战胜的原因：①新事物具有新的结构和功能，②新事物是在旧事物的“母体”中孕育成熟的，并添加了旧事物所不能容纳的新内容，③新事物符合人民群众的利益。","kind":"cloze","legacy":21},{"id":"c15ff342","part":"马原","section":"马哲","stem":"辩证法的三大规律：{{0}}","answers":["①对立统一规律②质变量变规律③否定之否定规律"],"raw":"辩证法的三大规律：①对立统一规律②质变量变规律③否定之否定规律","kind":"cloze","legacy":22},{"id":"5992144e","part":"马原","section":"马哲","stem":"对立统一规律是{{0}}、辩证法的本质和核心。","answers":["事物发展的根本规律"],"raw":"对立统一规律是事物发展的根本规律、辩证法的本质和核心。","kind":"cloze","legacy":23},{"id":"cc9c2adb","part":"马原","section":"马哲","stem":"具体问题具体分析是{{0}}。","answers":["马克思主义活的灵魂"],"raw":"具体问题具体分析是马克思主义活的灵魂。","kind":"cloze","legacy":24},{"id":"caffa274","part":"马原","section":"马哲","stem":"事物的性质是{{0}}。","answers":["由主要矛盾的主要方面所决定的"],"raw":"事物的性质是由主要矛盾的主要方面所决定的。","kind":"cloze","legacy":25},{"id":"55d64920","part":"马原","section":"马哲","stem":"本质决定现象，现象（即使是{{0}}）表现本质。","answers":["假象"],"raw":"本质决定现象，现象（即使是假象）表现本质。","kind":"cloze","legacy":26},{"id":"87da9c8c","part":"马原","section":"马哲","stem":"实践的本质是{{0}}。","answers":["人类能动地改造世界的社会性的物质活动"],"raw":"实践的本质是人类能动地改造世界的社会性的物质活动。","kind":"cloze","legacy":27},{"id":"773f614e","part":"马原","section":"马哲","stem":"实践的三个基本特征：{{0}}","answers":["①客观实在性（最基本）②自觉能动性③社会历史性"],"raw":"实践的三个基本特征：①客观实在性（最基本）②自觉能动性③社会历史性","kind":"cloze","legacy":28},{"id":"6e056329","part":"马原","section":"马哲","stem":"实践的基本结构（实践活动的三项基本要素）：{{0}}","answers":["①主体②客体③中介"],"raw":"实践的基本结构（实践活动的三项基本要素）：①主体②客体③中介","kind":"cloze","legacy":29},{"id":"2223e3f0","part":"马原","section":"马哲","stem":"实践的三种基本类型：{{0}}","answers":["①物质生产实践（最基本）②社会政治实践③科学文化实践"],"raw":"实践的三种基本类型：①物质生产实践（最基本）②社会政治实践③科学文化实践","kind":"cloze","legacy":30},{"id":"a2e8b525","part":"马原","section":"马哲","stem":"虚拟实践的特点：{{0}}","answers":["①交互性②开放性③间接性"],"raw":"虚拟实践的特点：①交互性②开放性③间接性","kind":"cloze","legacy":31},{"id":"fb2ec4ff","part":"马原","section":"马哲","stem":"实践的主体和客体相互作用的关系：{{0}}","answers":["①实践关系（最根本）②认识关系③价值关系"],"raw":"实践的主体和客体相互作用的关系：①实践关系（最根本）②认识关系③价值关系","kind":"cloze","legacy":32},{"id":"7c716f5d","part":"马原","section":"马哲","stem":"实践是{{0}}、来源、动力、目的、唯一检验标准。","answers":["认识产生和发展的基础"],"raw":"实践是认识产生和发展的基础、来源、动力、目的、唯一检验标准。","kind":"cloze","legacy":33},{"id":"0bbda604","part":"马原","section":"马哲","stem":"认识的本质是{{0}}。","answers":["主体在实践基础上对客体的能动反映"],"raw":"认识的本质是主体在实践基础上对客体的能动反映。","kind":"cloze","legacy":34},{"id":"8482aabc","part":"马原","section":"马哲","stem":"客观性是{{0}}；真理的客观性决定了真理的一元性。","answers":["真理的本质属性"],"raw":"客观性是真理的本质属性；真理的客观性决定了真理的一元性。","kind":"cloze","legacy":35},{"id":"344b0deb","part":"马原","section":"马哲","stem":"实践是{{0}}，是{{1}}。","answers":["检验真理的唯一标准","由真理的本性和实践的特点决定的"],"raw":"实践是检验真理的唯一标准，是由真理的本性和实践的特点决定的。","kind":"cloze","legacy":36},{"id":"8d706c1e","part":"马原","section":"马哲","stem":"实践是{{0}}；价值尺度必须以真理尺度为{{1}}。","answers":["真理与价值统一的基础","前提"],"raw":"实践是真理与价值统一的基础；价值尺度必须以真理尺度为前提。","kind":"cloze","legacy":37},{"id":"a532345c","part":"马原","section":"马哲","stem":"认识世界的根本目的在于改造世界；认识必然和争取自由是{{0}}。","answers":["人类认识世界和改造世界的根本目标"],"raw":"认识世界的根本目的在于改造世界；认识必然和争取自由是人类认识世界和改造世界的根本目标。","kind":"cloze","legacy":38},{"id":"0060daee","part":"马原","section":"马哲","stem":"一切从实际出发是{{0}}。","answers":["马克思主义认识论的根本要求"],"raw":"一切从实际出发是马克思主义认识论的根本要求。","kind":"cloze","legacy":39},{"id":"cb8b9c2e","part":"马原","section":"马哲","stem":"社会存在包括：{{0}}","answers":["①自然地理环境②人口因素③物质生产方式"],"raw":"社会存在包括：①自然地理环境②人口因素③物质生产方式","kind":"cloze","legacy":40},{"id":"c682cd60","part":"马原","section":"马哲","stem":"生产方式是{{0}}，是{{1}}，是{{2}}。生产方式的变化发展决定整个社会历史的变化发展，决定社会形态从低级向高级的更替和发展。","answers":["社会历史发展的决定力量","人类社会赖以存在和发展的基础","人类其他一切活动的首要前提"],"raw":"生产方式是社会历史发展的决定力量，是人类社会赖以存在和发展的基础，是人类其他一切活动的首要前提。生产方式的变化发展决定整个社会历史的变化发展，决定社会形态从低级向高级的更替和发展。","kind":"cloze","legacy":41},{"id":"fec5e038","part":"马原","section":"马哲","stem":"社会意识具有相对独立性的三个表现：{{0}}","answers":["①不完全同步性和不平衡性②各种形式之间存在相互影响且各自具有历史继承性③社会意识对社会存在具有能动的反作用（最突出）"],"raw":"社会意识具有相对独立性的三个表现：①不完全同步性和不平衡性②各种形式之间存在相互影响且各自具有历史继承性③社会意识对社会存在具有能动的反作用（最突出）","kind":"cloze","legacy":42},{"id":"c4f47628","part":"马原","section":"马哲","stem":"社会基本矛盾是{{0}}，是{{1}}。","answers":["历史发展的根本动力","其他一切社会矛盾的根源"],"raw":"社会基本矛盾是历史发展的根本动力，是其他一切社会矛盾的根源。","kind":"cloze","legacy":43},{"id":"dbe6ec01","part":"马原","section":"马哲","stem":"生产力决定生产关系，生产关系反作用于生产力。经济基础决定上层建筑，上层建筑反作用于经济基础。","answers":[],"raw":"生产力决定生产关系，生产关系反作用于生产力。经济基础决定上层建筑，上层建筑反作用于经济基础。","kind":"plain","legacy":44},{"id":"58235c91","part":"马原","section":"马哲","stem":"生产力是{{0}}，是{{1}}，是{{2}}。","answers":["社会进步的根本内容","衡量社会进步的根本尺度","人类社会发展和进步的最终决定力量"],"raw":"生产力是社会进步的根本内容，是衡量社会进步的根本尺度，是人类社会发展和进步的最终决定力量。","kind":"cloze","legacy":45},{"id":"52b989d6","part":"马原","section":"马哲","stem":"生产力的基本要素：{{0}}","answers":["①劳动资料，其中最重要的是生产工具（生产工具是区分社会经济时代的客观依据）②劳动对象③劳动者"],"raw":"生产力的基本要素：①劳动资料，其中最重要的是生产工具（生产工具是区分社会经济时代的客观依据）②劳动对象③劳动者","kind":"cloze","legacy":46},{"id":"60da8a74","part":"马原","section":"马哲","stem":"劳动者是{{0}}，人才资源是{{1}}。","answers":["生产力中最活跃的因素","第一资源"],"raw":"劳动者是生产力中最活跃的因素，人才资源是第一资源。","kind":"cloze","legacy":47},{"id":"ae4eb1fa","part":"马原","section":"马哲","stem":"科学技术是{{0}}，是{{1}}。","answers":["先进生产力的集中体现和主要标志","第一生产力"],"raw":"科学技术是先进生产力的集中体现和主要标志，是第一生产力。","kind":"cloze","legacy":48},{"id":"63d50f83","part":"马原","section":"马哲","stem":"生产关系是{{0}}；在生产关系中，生产资料所有制关系是{{1}}，是{{2}}、判定社会经济结构性质的客观依据。","answers":["社会关系中最基本的关系","最基本的","区分不同生产方式"],"raw":"生产关系是社会关系中最基本的关系；在生产关系中，生产资料所有制关系是最基本的，是区分不同生产方式、判定社会经济结构性质的客观依据。","kind":"cloze","legacy":49},{"id":"eba2eb12","part":"马原","section":"马哲","stem":"普遍交往是{{0}}。","answers":["世界历史的基本特征"],"raw":"普遍交往是世界历史的基本特征。","kind":"cloze","legacy":50},{"id":"03f25294","part":"马原","section":"马哲","stem":"人的发展从低级到高级的三个阶段：{{0}}","answers":["①人的依赖关系占统治地位的阶段②以物的依赖关系为基础的人的独立性的阶段③自由个性的阶段。人的发展最根本的是人的自由程度的提高。"],"raw":"人的发展从低级到高级的三个阶段：①人的依赖关系占统治地位的阶段②以物的依赖关系为基础的人的独立性的阶段③自由个性的阶段。人的发展最根本的是人的自由程度的提高。","kind":"cloze","legacy":51},{"id":"9343cbbd","part":"马原","section":"马哲","stem":"文化的重要意义：{{0}}","answers":["①提供思想指引②提供精神动力③提供凝聚力量"],"raw":"文化的重要意义：①提供思想指引②提供精神动力③提供凝聚力量","kind":"cloze","legacy":52},{"id":"b98ff17c","part":"马原","section":"马哲","stem":"生产力与生产关系矛盾运动的规律性，从根本上规定了社会形态更替的客观必然性。","answers":[],"raw":"生产力与生产关系矛盾运动的规律性，从根本上规定了社会形态更替的客观必然性。","kind":"plain","legacy":53},{"id":"f111f559","part":"马原","section":"马哲","stem":"人的本质是{{0}}；社会属性是{{1}}。","answers":["一切社会关系的总和","人的本质属性"],"raw":"人的本质是一切社会关系的总和；社会属性是人的本质属性。","kind":"cloze","legacy":54},{"id":"60907a18","part":"马原","section":"马哲","stem":"人民群众是{{0}}。","answers":["社会形态变革的决定力量"],"raw":"人民群众是社会形态变革的决定力量。","kind":"cloze","legacy":55},{"id":"309bc4cb","part":"马原","section":"马哲","stem":"人民群众起着决定性的作用：{{0}}","answers":["①物质财富的创造者②精神财富的创造者③是社会变革的决定力量"],"raw":"人民群众起着决定性的作用：①物质财富的创造者②精神财富的创造者③是社会变革的决定力量","kind":"cloze","legacy":56},{"id":"98ab5c43","part":"马原","section":"马克思主义政治经济学","stem":"商品价值量是{{0}}，复杂劳动等于自乘的或多倍的简单劳动。复杂劳动转化为{{1}}，是{{2}}。","answers":["以简单劳动为尺度计量的","简单劳动","在商品交换过程中自发实现的"],"raw":"商品价值量是以简单劳动为尺度计量的，复杂劳动等于自乘的或多倍的简单劳动。复杂劳动转化为简单劳动，是在商品交换过程中自发实现的。","kind":"cloze","legacy":57},{"id":"fe7d28a9","part":"马原","section":"马克思主义政治经济学","stem":"价值规律的表现形式是{{0}}。","answers":["商品的价格围绕价值自发波动"],"raw":"价值规律的表现形式是商品的价格围绕价值自发波动。","kind":"cloze","legacy":58},{"id":"756a4a6b","part":"马原","section":"马克思主义政治经济学","stem":"私有制为基础的商品经济的基本矛盾：{{0}}","answers":["私人劳动和社会劳动的矛盾。原因：第一，私人劳动和社会劳动的矛盾决定着商品经济的本质及其发展过程。第二，私人劳动和社会劳动的矛盾是商品经济的其他一切矛盾的基础。第三，私人劳动和社会劳动的矛盾决定着商品生产者的命运。"],"raw":"私有制为基础的商品经济的基本矛盾：私人劳动和社会劳动的矛盾。原因：第一，私人劳动和社会劳动的矛盾决定着商品经济的本质及其发展过程。第二，私人劳动和社会劳动的矛盾是商品经济的其他一切矛盾的基础。第三，私人劳动和社会劳动的矛盾决定着商品生产者的命运。","kind":"cloze","legacy":59},{"id":"a9ec7734","part":"马原","section":"马克思主义政治经济学","stem":"劳动力成为商品，要具备两个基本条件：{{0}}","answers":["①劳动者是自由人；②劳动者没有别的商品可以出卖。"],"raw":"劳动力成为商品，要具备两个基本条件：①劳动者是自由人；②劳动者没有别的商品可以出卖。","kind":"cloze","legacy":60},{"id":"19620f45","part":"马原","section":"马克思主义政治经济学","stem":"劳动力商品的价值包括三个部分：{{0}}","answers":["①维持劳动者本人生存所必需的生活资料的价值；②维持劳动者家属的生存所必需的生活资料的价值；③劳动者接受教育和训练所支出的费用。劳动力价值的构成还包含一个历史的和道德的因素。"],"raw":"劳动力商品的价值包括三个部分：①维持劳动者本人生存所必需的生活资料的价值；②维持劳动者家属的生存所必需的生活资料的价值；③劳动者接受教育和训练所支出的费用。劳动力价值的构成还包含一个历史的和道德的因素。","kind":"cloze","legacy":61},{"id":"5daab811","part":"马原","section":"马克思主义政治经济学","stem":"资本主义劳动过程有两个特点：{{0}}","answers":["其一，工人在资本家的监督下劳动，他们的劳动隶属于资本家；其二，劳动成果或劳动产品全部归资本家所有。"],"raw":"资本主义劳动过程有两个特点：其一，工人在资本家的监督下劳动，他们的劳动隶属于资本家；其二，劳动成果或劳动产品全部归资本家所有。","kind":"cloze","legacy":62},{"id":"1069fb33","part":"马原","section":"马克思主义政治经济学","stem":"雇佣劳动者的剩余劳动是{{0}}。","answers":["剩余价值产生的唯一源泉"],"raw":"雇佣劳动者的剩余劳动是剩余价值产生的唯一源泉。","kind":"cloze","legacy":63},{"id":"05de45f8","part":"马原","section":"马克思主义政治经济学","stem":"资本主义条件下的生产自动化是{{0}}，而雇佣工人的剩余劳动仍然是{{1}}。","answers":["资本家获取高额剩余价值的手段","这种剩余价值的唯一源泉"],"raw":"资本主义条件下的生产自动化是资本家获取高额剩余价值的手段，而雇佣工人的剩余劳动仍然是这种剩余价值的唯一源泉。","kind":"cloze","legacy":64},{"id":"8ff8fc7f","part":"马原","section":"马克思主义政治经济学","stem":"资本积累是{{0}}。","answers":["资本主义扩大再生产的源泉"],"raw":"资本积累是资本主义扩大再生产的源泉。","kind":"cloze","legacy":65},{"id":"cf2695cf","part":"马原","section":"马克思主义政治经济学","stem":"由生产的技术水平所决定的生产资料和劳动力之间的比例，叫作资本的技术构成。资本可分为{{0}}，这两部分资本价值之间的比例，叫作资本的价值构成。资本技术构成决定并反映技术构成变化的资本价值构成，叫作资本的有机构成，通常用C:V来表示。","answers":["不变资本和可变资本"],"raw":"由生产的技术水平所决定的生产资料和劳动力之间的比例，叫作资本的技术构成。资本可分为不变资本和可变资本，这两部分资本价值之间的比例，叫作资本的价值构成。资本技术构成决定并反映技术构成变化的资本价值构成，叫作资本的有机构成，通常用C:V来表示。","kind":"cloze","legacy":66},{"id":"05f813e8","part":"马原","section":"马克思主义政治经济学","stem":"资本循环及其职能形式及基本条件：{{0}}","answers":["购买阶段，产业资本执行的是货币资本的职能；生产阶段，产业资本执行的是生产资本的职能；售卖阶段，产业资本执行的是商品资本的职能。产业资本的三种职能形式必须在空间上同时并存，必须在时间上继起。"],"raw":"资本循环及其职能形式及基本条件：购买阶段，产业资本执行的是货币资本的职能；生产阶段，产业资本执行的是生产资本的职能；售卖阶段，产业资本执行的是商品资本的职能。产业资本的三种职能形式必须在空间上同时并存，必须在时间上继起。","kind":"cloze","legacy":67},{"id":"453ba0b6","part":"马原","section":"马克思主义政治经济学","stem":"影响资本周转快慢的因素有很多，关键的因素有两个：{{0}}","answers":["资本周转时间、生产资本中固定资本和流动资本的构成。"],"raw":"影响资本周转快慢的因素有很多，关键的因素有两个：资本周转时间、生产资本中固定资本和流动资本的构成。","kind":"cloze","legacy":68},{"id":"7eb645fb","part":"马原","section":"马克思主义政治经济学","stem":"资本主义工资的本质是{{0}}，但工资表现为“劳动的价格”或工人全部劳动的报酬，这就模糊了工人必要劳动和剩余劳动的界限，掩盖了资本主义剥削关系。","answers":["劳动力的价值或价格"],"raw":"资本主义工资的本质是劳动力的价值或价格，但工资表现为“劳动的价格”或工人全部劳动的报酬，这就模糊了工人必要劳动和剩余劳动的界限，掩盖了资本主义剥削关系。","kind":"cloze","legacy":69},{"id":"628e877f","part":"马原","section":"马克思主义政治经济学","stem":"生产相对过剩是资本主义经济危机的本质特征。经济危机的可能性是由货币作为支付手段和流通手段引起的。资本主义经济危机爆发的根本原因是资本主义的基本矛盾。资本主义经济危机具有周期性，一般包括四个阶段：{{0}}","answers":["危机、萧条、复苏和高涨。"],"raw":"生产相对过剩是资本主义经济危机的本质特征。经济危机的可能性是由货币作为支付手段和流通手段引起的。资本主义经济危机爆发的根本原因是资本主义的基本矛盾。资本主义经济危机具有周期性，一般包括四个阶段：危机、萧条、复苏和高涨。","kind":"cloze","legacy":70},{"id":"e2e02f93","part":"马原","section":"马克思主义政治经济学","stem":"垄断产生的原因：{{0}}","answers":["第一，当生产集中发展到相当高的程度；第二，企业规模巨大，形成对竞争的限制，也会产生垄断；第三，为了避免两败俱伤，企业之间会达成妥协，联合起来，实行垄断。"],"raw":"垄断产生的原因：第一，当生产集中发展到相当高的程度；第二，企业规模巨大，形成对竞争的限制，也会产生垄断；第三，为了避免两败俱伤，企业之间会达成妥协，联合起来，实行垄断。","kind":"cloze","legacy":71},{"id":"ef564652","part":"马原","section":"马克思主义政治经济学","stem":"垄断并不能消除竞争的原因：{{0}}","answers":["一是垄断没有消除产生竞争的经济条件。二是垄断必须通过竞争来维持。三是社会生产是复杂多样的，任何垄断组织都不可能把包罗万象的社会生产都包下来。"],"raw":"垄断并不能消除竞争的原因：一是垄断没有消除产生竞争的经济条件。二是垄断必须通过竞争来维持。三是社会生产是复杂多样的，任何垄断组织都不可能把包罗万象的社会生产都包下来。","kind":"cloze","legacy":72},{"id":"2065d49a","part":"马原","section":"马克思主义政治经济学","stem":"金融资本形成的主要途径包括{{0}}、资本参与和人事参与。","answers":["金融联系"],"raw":"金融资本形成的主要途径包括金融联系、资本参与和人事参与。","kind":"cloze","legacy":73},{"id":"4e171300","part":"马原","section":"马克思主义政治经济学","stem":"金融寡头在经济中的统治，主要是{{0}}“参与制”来实现的。在政治上对国家机器的控制主要是{{1}}“个人联合”来实现的。金融寡头还通过建立政策咨询机构等方式对政府的政策施加影响，并通过掌握新闻、科教、文化等上层建筑的各个领域，左右国家的内政外交及社会生活。","answers":["通过","通过同政府的多种途径的"],"raw":"金融寡头在经济中的统治，主要是通过“参与制”来实现的。在政治上对国家机器的控制主要是通过同政府的多种途径的“个人联合”来实现的。金融寡头还通过建立政策咨询机构等方式对政府的政策施加影响，并通过掌握新闻、科教、文化等上层建筑的各个领域，左右国家的内政外交及社会生活。","kind":"cloze","legacy":74},{"id":"172ef58f","part":"马原","section":"马克思主义政治经济学","stem":"垄断利润的来源：{{0}}","answers":["来自对本国无产阶级和其他劳动人民剥削的加强；通过控制市场获得一些其他企业特别是非垄断企业的利润；通过加强对其他国家劳动人民的剥削和掠夺从国外获取利润；通过资本主义国家政权进行有利于垄断资本的再分配，从而将劳动人民创造的国民收入的一部分变成垄断资本的收入。"],"raw":"垄断利润的来源：来自对本国无产阶级和其他劳动人民剥削的加强；通过控制市场获得一些其他企业特别是非垄断企业的利润；通过加强对其他国家劳动人民的剥削和掠夺从国外获取利润；通过资本主义国家政权进行有利于垄断资本的再分配，从而将劳动人民创造的国民收入的一部分变成垄断资本的收入。","kind":"cloze","legacy":75},{"id":"d40fe1ef","part":"马原","section":"马克思主义政治经济学","stem":"国家垄断资本主义形成的原因：{{0}}","answers":["首先，社会生产力的发展，要求资本主义生产资料在更大范围内被支配，从而促进了国家垄断资本主义的产生；其次，经济波动和经济危机的深化，要求国家垄断资本主义的产生；最后，缓和社会矛盾、协调利益关系，也要求国家垄断资本主义的产生。"],"raw":"国家垄断资本主义形成的原因：首先，社会生产力的发展，要求资本主义生产资料在更大范围内被支配，从而促进了国家垄断资本主义的产生；其次，经济波动和经济危机的深化，要求国家垄断资本主义的产生；最后，缓和社会矛盾、协调利益关系，也要求国家垄断资本主义的产生。","kind":"cloze","legacy":76},{"id":"2fc2ac41","part":"马原","section":"马克思主义政治经济学","stem":"金融自由化与金融创新是{{0}}。","answers":["金融垄断资本得以形成和壮大的重要制度条件"],"raw":"金融自由化与金融创新是金融垄断资本得以形成和壮大的重要制度条件。","kind":"cloze","legacy":77},{"id":"fb849e50","part":"马原","section":"马克思主义政治经济学","stem":"垄断资本向世界范围扩展的基本形式：{{0}}","answers":["一是借贷资本输出；二是生产资本输出；三是商品资本输出。"],"raw":"垄断资本向世界范围扩展的基本形式：一是借贷资本输出；二是生产资本输出；三是商品资本输出。","kind":"cloze","legacy":78},{"id":"07cf4258","part":"马原","section":"马克思主义政治经济学","stem":"当代资本主义发生新变化的特征。第一，科技创新加速资本主义发生变化。一是产业结构的调整。二是生产组织形式和劳动形式的变化。三是新经济形态的出现。第二，国际金融垄断资本影响日益显现（是当代资本主义最突出、最鲜明、最主要的特征）。一是金融垄断寡头化。二是金融垄断国际化。三是经济虚拟化、产业空心化。第三，社会阶级阶层结构的复杂化、多样化。第四，发达资本主义国家凭借经济、科技、文化传播等超级优势，在世界范围内推行霸权主义和强权政治。","answers":[],"raw":"当代资本主义发生新变化的特征。第一，科技创新加速资本主义发生变化。一是产业结构的调整。二是生产组织形式和劳动形式的变化。三是新经济形态的出现。第二，国际金融垄断资本影响日益显现（是当代资本主义最突出、最鲜明、最主要的特征）。一是金融垄断寡头化。二是金融垄断国际化。三是经济虚拟化、产业空心化。第三，社会阶级阶层结构的复杂化、多样化。第四，发达资本主义国家凭借经济、科技、文化传播等超级优势，在世界范围内推行霸权主义和强权政治。","kind":"plain","legacy":79},{"id":"d4099503","part":"马原","section":"科学社会主义","stem":"社会主义从空想到科学飞跃的理论基础：{{0}}","answers":["唯物史观和剩余价值学说。《共产党宣言》的发表，标志着科学社会主义公开问世。"],"raw":"社会主义从空想到科学飞跃的理论基础：唯物史观和剩余价值学说。《共产党宣言》的发表，标志着科学社会主义公开问世。","kind":"cloze","legacy":80},{"id":"4928574f","part":"马原","section":"科学社会主义","stem":"列宁对社会主义道路的探索。新经济政策时期。以发展商品经济为主要特征的新经济政策。其主要内容有：{{0}}","answers":["①用粮食税制取代余粮收集制，②允许私人自由贸易，③恢复商品货币关系，④允许私人小工业企业发展，⑤采取一些国家资本主义的形式来发展生产。这标志着列宁正在探索一条符合俄国国情的建设社会主义的道路。"],"raw":"列宁对社会主义道路的探索。新经济政策时期。以发展商品经济为主要特征的新经济政策。其主要内容有：①用粮食税制取代余粮收集制，②允许私人自由贸易，③恢复商品货币关系，④允许私人小工业企业发展，⑤采取一些国家资本主义的形式来发展生产。这标志着列宁正在探索一条符合俄国国情的建设社会主义的道路。","kind":"cloze","legacy":81},{"id":"33a62bcc","part":"马原","section":"科学社会主义","stem":"列宁对苏维埃俄国如何建设社会主义进行了深刻的理论思考，提出了许多精辟的论述：{{0}}","answers":["首先，把建设社会主义作为一个长期探索、不断实践的过程。其次，把大力发展生产力、提高劳动生产率放在首要地位。再次，在多种经济成分并存的条件下，利用商品、货币和市场发展经济。最后，利用资本主义建设社会主义。"],"raw":"列宁对苏维埃俄国如何建设社会主义进行了深刻的理论思考，提出了许多精辟的论述：首先，把建设社会主义作为一个长期探索、不断实践的过程。其次，把大力发展生产力、提高劳动生产率放在首要地位。再次，在多种经济成分并存的条件下，利用商品、货币和市场发展经济。最后，利用资本主义建设社会主义。","kind":"cloze","legacy":82},{"id":"075dd798","part":"马原","section":"科学社会主义","stem":"正确把握科学社会主义基本原则。第一，必须始终坚持科学社会主义基本原则。第二，要善于把科学社会主义基本原则与本国实际相结合。第三，紧跟时代和实践的发展。","answers":[],"raw":"正确把握科学社会主义基本原则。第一，必须始终坚持科学社会主义基本原则。第二，要善于把科学社会主义基本原则与本国实际相结合。第三，紧跟时代和实践的发展。","kind":"plain","legacy":83},{"id":"0811d583","part":"马原","section":"科学社会主义","stem":"社会主义建设具有长期性的原因。第一，生产力发展状况的制约。第二，经济基础和上层建筑发展状况的制约。第三，国际环境的严峻挑战。第四，马克思主义执政党对社会主义发展道路的探索和对社会主义建设规律的认识，需要一个长期的过程。","answers":[],"raw":"社会主义建设具有长期性的原因。第一，生产力发展状况的制约。第二，经济基础和上层建筑发展状况的制约。第三，国际环境的严峻挑战。第四，马克思主义执政党对社会主义发展道路的探索和对社会主义建设规律的认识，需要一个长期的过程。","kind":"plain","legacy":84},{"id":"3b193e31","part":"马原","section":"科学社会主义","stem":"社会主义发展道路多样性的原因。第一，各个国家的生产力发展状况和社会发展阶段决定了社会主义发展道路具有不同的特点。第二，历史文化传统的差异性是{{0}}。第三，时代和实践的不断发展，是{{1}}。","answers":["造成不同国家社会主义发展道路多样性的重要条件","造成社会主义发展道路多样性的现实原因"],"raw":"社会主义发展道路多样性的原因。第一，各个国家的生产力发展状况和社会发展阶段决定了社会主义发展道路具有不同的特点。第二，历史文化传统的差异性是造成不同国家社会主义发展道路多样性的重要条件。第三，时代和实践的不断发展，是造成社会主义发展道路多样性的现实原因。","kind":"cloze","legacy":85},{"id":"2b986699","part":"马原","section":"科学社会主义","stem":"如何探索符合本国国情的发展道路。第一，探索社会主义发展道路，必须坚持对待马克思主义的科学态度。第二，探索社会主义发展道路，必须从当时当地的历史条件出发，坚持“走自己的路”。第三，探索社会主义发展道路，必须充分吸收人类一切优秀文明成果。","answers":[],"raw":"如何探索符合本国国情的发展道路。第一，探索社会主义发展道路，必须坚持对待马克思主义的科学态度。第二，探索社会主义发展道路，必须从当时当地的历史条件出发，坚持“走自己的路”。第三，探索社会主义发展道路，必须充分吸收人类一切优秀文明成果。","kind":"plain","legacy":86},{"id":"88c3690e","part":"马原","section":"科学社会主义","stem":"共产主义社会的基本特征。第一，物质财富极大丰富，消费资料按需分配。第二，社会关系高度和谐，人们精神境界极大提高。第三，每个人自由而全面的发展，人类从必然王国向自由王国的飞跃。实现人的自由而全面的发展，是{{0}}，也是{{1}}。","answers":["马克思主义追求的根本价值目标","共产主义社会的根本特征"],"raw":"共产主义社会的基本特征。第一，物质财富极大丰富，消费资料按需分配。第二，社会关系高度和谐，人们精神境界极大提高。第三，每个人自由而全面的发展，人类从必然王国向自由王国的飞跃。实现人的自由而全面的发展，是马克思主义追求的根本价值目标，也是共产主义社会的根本特征。","kind":"cloze","legacy":87},{"id":"caa58c03","part":"毛中特·习思想","section":"","stem":"新民主主义革命与旧民主主义革命相比有新的内容和特点。集中表现在中国革命处于世界无产阶级社会主义革命的时代，是{{0}}；革命的领导力量是{{1}}；革命的指导思想是{{2}}；革命的前途是{{3}}。","answers":["世界无产阶级社会主义革命的一部分","中国无产阶级及其先锋队——中国共产党","马克思列宁主义","社会主义而不是资本主义"],"raw":"新民主主义革命与旧民主主义革命相比有新的内容和特点。集中表现在中国革命处于世界无产阶级社会主义革命的时代，是世界无产阶级社会主义革命的一部分；革命的领导力量是中国无产阶级及其先锋队——中国共产党；革命的指导思想是马克思列宁主义；革命的前途是社会主义而不是资本主义。","kind":"cloze","legacy":88},{"id":"c9e05eee","part":"毛中特·习思想","section":"","stem":"毛泽东写下了《中国的红色政权为{{0}}？》《井冈山的斗争》《星星之火，可以燎原》等文章，提出了“工农武装割据”思想，初步形成了农村包围城市的革命道路理论。1938年11月，党的六届六中全会确立了经过长期武装斗争，先占农村，后取城市，最后夺取全国胜利的革命道路。","answers":["什么能够存在"],"raw":"毛泽东写下了《中国的红色政权为什么能够存在？》《井冈山的斗争》《星星之火，可以燎原》等文章，提出了“工农武装割据”思想，初步形成了农村包围城市的革命道路理论。1938年11月，党的六届六中全会确立了经过长期武装斗争，先占农村，后取城市，最后夺取全国胜利的革命道路。","kind":"cloze","legacy":89},{"id":"58790b77","part":"毛中特·习思想","section":"","stem":"新民主主义革命理论是{{0}}，开辟了马克思主义中国化的发展道路。","answers":["马克思主义中国化的重要理论成果"],"raw":"新民主主义革命理论是马克思主义中国化的重要理论成果，开辟了马克思主义中国化的发展道路。","kind":"cloze","legacy":90},{"id":"15461b71","part":"毛中特·习思想","section":"","stem":"在进行社会主义改造、向社会主义过渡的进程中，中国共产党积累了丰富的历史经验。第一，坚持社会主义工业化建设与社会主义改造同时并举。第二，采取积极引导、逐步过渡的方式。第三，用和平方法进行改造。","answers":[],"raw":"在进行社会主义改造、向社会主义过渡的进程中，中国共产党积累了丰富的历史经验。第一，坚持社会主义工业化建设与社会主义改造同时并举。第二，采取积极引导、逐步过渡的方式。第三，用和平方法进行改造。","kind":"plain","legacy":91},{"id":"d487069d","part":"毛中特·习思想","section":"","stem":"中华人民共和国的成立，为{{0}}。","answers":["我国实现工业化提供了根本的政治前提"],"raw":"中华人民共和国的成立，为我国实现工业化提供了根本的政治前提。","kind":"cloze","legacy":92},{"id":"f30a7372","part":"毛中特·习思想","section":"","stem":"毫不动摇地坚持公有制和按劳分配，维护公有制和按劳分配的主体地位，是{{0}}。","answers":["体现社会主义本质的前提"],"raw":"毫不动摇地坚持公有制和按劳分配，维护公有制和按劳分配的主体地位，是体现社会主义本质的前提。","kind":"cloze","legacy":93},{"id":"d9b7b00e","part":"毛中特·习思想","section":"①经营方式","stem":"主体：{{0}}","answers":["国家经营和集体经营，这是工商业的主体，体现了社会主义公有制经济的主导地位，能够集中力量进行大规模的经济建设和资源配置，为国家的经济发展提供坚实的基础。"],"raw":"主体：国家经营和集体经营，这是工商业的主体，体现了社会主义公有制经济的主导地位，能够集中力量进行大规模的经济建设和资源配置，为国家的经济发展提供坚实的基础。","kind":"cloze","legacy":94},{"id":"83d22903","part":"毛中特·习思想","section":"①经营方式","stem":"补充：{{0}}","answers":["一定数量的个体经营，作为国家经营和集体经营的补充，可以满足市场多样化的需求，增加经济的灵活性和活力，促进市场竞争，提高经济效率。"],"raw":"补充：一定数量的个体经营，作为国家经营和集体经营的补充，可以满足市场多样化的需求，增加经济的灵活性和活力，促进市场竞争，提高经济效率。","kind":"cloze","legacy":95},{"id":"364710f3","part":"毛中特·习思想","section":"②生产计划","stem":"主体：{{0}}","answers":["计划生产，这是全国工农业生产的主体，通过国家的计划安排，能够保证国民经济的稳定发展，合理配置资源，避免生产的盲目性和无序性，确保国家经济的宏观调控目标得以实现。"],"raw":"主体：计划生产，这是全国工农业生产的主体，通过国家的计划安排，能够保证国民经济的稳定发展，合理配置资源，避免生产的盲目性和无序性，确保国家经济的宏观调控目标得以实现。","kind":"cloze","legacy":96},{"id":"c4211f9c","part":"毛中特·习思想","section":"②生产计划","stem":"补充：{{0}}","answers":["按照市场变化而在国家计划许可范围内的自由生产，作为计划生产的补充，可以根据市场需求的变化及时调整生产，更好地满足消费者的需求，同时也有助于提高企业的市场竞争力和经济效益。"],"raw":"补充：按照市场变化而在国家计划许可范围内的自由生产，作为计划生产的补充，可以根据市场需求的变化及时调整生产，更好地满足消费者的需求，同时也有助于提高企业的市场竞争力和经济效益。","kind":"cloze","legacy":97},{"id":"3fe1e46d","part":"毛中特·习思想","section":"③市场体系","stem":"主体：{{0}}","answers":["国家市场，这是社会主义统一市场的主体，由国家对市场进行宏观调控和管理，保证市场的稳定和公平竞争，维护国家的经济利益和社会公共利益。"],"raw":"主体：国家市场，这是社会主义统一市场的主体，由国家对市场进行宏观调控和管理，保证市场的稳定和公平竞争，维护国家的经济利益和社会公共利益。","kind":"cloze","legacy":98},{"id":"a1337e3c","part":"毛中特·习思想","section":"③市场体系","stem":"补充：{{0}}","answers":["一定范围内的国家领导的自由市场，作为国家市场的补充，可以在国家的引导和监管下，发挥市场机制的作用，促进商品流通和资源的有效配置，增强经济的活力和适应性。"],"raw":"补充：一定范围内的国家领导的自由市场，作为国家市场的补充，可以在国家的引导和监管下，发挥市场机制的作用，促进商品流通和资源的有效配置，增强经济的活力和适应性。","kind":"cloze","legacy":99},{"id":"54b97857","part":"毛中特·习思想","section":"③市场体系","stem":"中央一号文件聚焦“农业新质生产力”，提出了乡村振兴的新举措。文件首次提出“农业新质生产力” ，旨在通过科技创新驱动农业现代化转型。2025年中央一号文件以深化改革为{{0}}，以确保国家粮食安全和不发生规模性返贫为{{1}}，着力于壮大富民产业、提升乡村建设水平、完善乡村治理，并通过一系列具有创新性和针对性的举措，为{{2}}、建设农业强国描绘了清晰的“路线图。","answers":["引擎","底线","扎实推进乡村全面振兴"],"raw":"中央一号文件聚焦“农业新质生产力”，提出了乡村振兴的新举措。文件首次提出“农业新质生产力” ，旨在通过科技创新驱动农业现代化转型。2025年中央一号文件以深化改革为引擎，以确保国家粮食安全和不发生规模性返贫为底线，着力于壮大富民产业、提升乡村建设水平、完善乡村治理，并通过一系列具有创新性和针对性的举措，为扎实推进乡村全面振兴、建设农业强国描绘了清晰的“路线图。","kind":"cloze","legacy":100},{"id":"c99e2126","part":"毛中特·习思想","section":"③市场体系","stem":"发展新质生产力是{{0}}。","answers":["推动高质量发展的内在要求和重要着力点"],"raw":"发展新质生产力是推动高质量发展的内在要求和重要着力点。","kind":"cloze","legacy":101},{"id":"468ca3b3","part":"毛中特·习思想","section":"③市场体系","stem":"《求是》杂志将发表习近平的重要文章《团结奋斗是{{0}}》。文章强调，力量生于团结，幸福源自奋斗。能团结奋斗的民族才有前途，能团结奋斗的政党才能立于不败之地。中国人民是{{1}}、伟大奋斗精神的人民。党和人民取得的一切成就都是团结奋斗的结果，团结奋斗是{{2}}。","answers":["中国人民创造历史伟业的必由之路","具有伟大团结精神","中国共产党和中国人民最显著的精神标识"],"raw":"《求是》杂志将发表习近平的重要文章《团结奋斗是中国人民创造历史伟业的必由之路》。文章强调，力量生于团结，幸福源自奋斗。能团结奋斗的民族才有前途，能团结奋斗的政党才能立于不败之地。中国人民是具有伟大团结精神、伟大奋斗精神的人民。党和人民取得的一切成就都是团结奋斗的结果，团结奋斗是中国共产党和中国人民最显著的精神标识。","kind":"cloze","legacy":102},{"id":"56247380","part":"毛中特·习思想","section":"③市场体系","stem":"习近平向全球文明对话部长级会议致贺信指出，多样文明是{{0}}。历史昭示我们，文明的繁盛、人类的进步，都离不开文明的交流互鉴。当前，国际形势变乱交织，人类站在新的十字路口，迫切需要以文明交流超越文明隔阂，以文明互鉴超越文明冲突。","answers":["世界的本色"],"raw":"习近平向全球文明对话部长级会议致贺信指出，多样文明是世界的本色。历史昭示我们，文明的繁盛、人类的进步，都离不开文明的交流互鉴。当前，国际形势变乱交织，人类站在新的十字路口，迫切需要以文明交流超越文明隔阂，以文明互鉴超越文明冲突。","kind":"cloze","legacy":103},{"id":"cbc43b7a","part":"毛中特·习思想","section":"③市场体系","stem":"中央城市工作会议强调，坚持和加强党的全面领导，认真践行人民城市理念，坚持稳中求进工作总基调，坚持因地制宜、分类指导，以建设创新、宜居、美丽、韧性、文明、智慧的现代化人民城市为{{0}}，以推动城市高质量发展为{{1}}，以坚持城市内涵式发展为{{2}}，以推进城市更新为{{3}}，大力推动城市结构优化、动能转换、品质提升、绿色转型、文脉赓续、治理增效，牢牢守住城市安全底线，走出一条中国特色城市现代化新路子。","answers":["目标","主题","主线","重要抓手"],"raw":"中央城市工作会议强调，坚持和加强党的全面领导，认真践行人民城市理念，坚持稳中求进工作总基调，坚持因地制宜、分类指导，以建设创新、宜居、美丽、韧性、文明、智慧的现代化人民城市为目标，以推动城市高质量发展为主题，以坚持城市内涵式发展为主线，以推进城市更新为重要抓手，大力推动城市结构优化、动能转换、品质提升、绿色转型、文脉赓续、治理增效，牢牢守住城市安全底线，走出一条中国特色城市现代化新路子。","kind":"cloze","legacy":104},{"id":"de6e1a99","part":"毛中特·习思想","section":"③市场体系","stem":"习近平8月20日听取西藏自治区党委和政府工作汇报强调，西藏要全面贯彻新时代党的治藏方略，坚持稳中求进工作总基调，完整准确全面贯彻新发展理念，扎实推动高质量发展，持续深入抓好稳定、发展、生态、强边四件大事，努力建设团结富裕文明和谐美丽的社会主义现代化新西藏。","answers":[],"raw":"习近平8月20日听取西藏自治区党委和政府工作汇报强调，西藏要全面贯彻新时代党的治藏方略，坚持稳中求进工作总基调，完整准确全面贯彻新发展理念，扎实推动高质量发展，持续深入抓好稳定、发展、生态、强边四件大事，努力建设团结富裕文明和谐美丽的社会主义现代化新西藏。","kind":"plain","legacy":105},{"id":"e2ae1342","part":"毛中特·习思想","section":"③市场体系","stem":"习近平7月1日上午主持召开中央财经委员会第六次会议，研究纵深推进全国统一大市场建设、海洋经济高质量发展等问题。习近平在会上发表重要讲话强调，建设全国统一大市场是{{0}}、推动高质量发展的需要，要认真落实党中央部署，加强协调配合，形成推进合力。推进中国式现代化必须推动海洋经济高质量发展，走出一条具有中国特色的向海图强之路。","answers":["构建新发展格局"],"raw":"习近平7月1日上午主持召开中央财经委员会第六次会议，研究纵深推进全国统一大市场建设、海洋经济高质量发展等问题。习近平在会上发表重要讲话强调，建设全国统一大市场是构建新发展格局、推动高质量发展的需要，要认真落实党中央部署，加强协调配合，形成推进合力。推进中国式现代化必须推动海洋经济高质量发展，走出一条具有中国特色的向海图强之路。","kind":"cloze","legacy":106},{"id":"734d1997","part":"毛中特·习思想","section":"③市场体系","stem":"国家主席习近平向2025年上海合作组织减贫和可持续发展论坛致贺信。习近平指出，消除贫困是{{0}}，也是{{1}}。中国经过艰苦努力，成功打赢脱贫攻坚战，提前10年实现联合国2030年可持续发展议程减贫目标，走出一条中国特色减贫道路，谱写了人类反贫困历史新篇章。","answers":["全球性难题","世界各国共同目标"],"raw":"国家主席习近平向2025年上海合作组织减贫和可持续发展论坛致贺信。习近平指出，消除贫困是全球性难题，也是世界各国共同目标。中国经过艰苦努力，成功打赢脱贫攻坚战，提前10年实现联合国2030年可持续发展议程减贫目标，走出一条中国特色减贫道路，谱写了人类反贫困历史新篇章。","kind":"cloze","legacy":107},{"id":"f1cf1e2a","part":"毛中特·习思想","section":"③市场体系","stem":"《求是》发表中共中央总书记、国家主席、中央军委主席习近平的重要文章《坚持和落实“两个毫不动摇”》。我国基本经济制度写入了宪法、党章，这是不会变的，也是不能变的。党和国家坚持和完善社会主义基本经济制度，毫不动摇巩固和发展公有制经济，毫不动摇鼓励、支持、引导非公有制经济发展；党和国家保证各种所有制经济依法平等使用生产要素、公平参与市场竞争、同等受到法律保护，促进各种所有制经济优势互补、共同发展，促进非公有制经济健康发展和非公有制经济人士健康成长。我国是中国共产党领导的社会主义国家，公有制经济是长期以来在国家发展历程中形成的，为国家建设、国防安全、人民生活改善作出了突出贡献，是全体人民的宝贵财富。国有企业为我国经济社会发展、科技进步、国防建设、民生改善作出了历史性贡献，是我们党执政兴国的重要支柱和依靠力量。","answers":[],"raw":"《求是》发表中共中央总书记、国家主席、中央军委主席习近平的重要文章《坚持和落实“两个毫不动摇”》。我国基本经济制度写入了宪法、党章，这是不会变的，也是不能变的。党和国家坚持和完善社会主义基本经济制度，毫不动摇巩固和发展公有制经济，毫不动摇鼓励、支持、引导非公有制经济发展；党和国家保证各种所有制经济依法平等使用生产要素、公平参与市场竞争、同等受到法律保护，促进各种所有制经济优势互补、共同发展，促进非公有制经济健康发展和非公有制经济人士健康成长。我国是中国共产党领导的社会主义国家，公有制经济是长期以来在国家发展历程中形成的，为国家建设、国防安全、人民生活改善作出了突出贡献，是全体人民的宝贵财富。国有企业为我国经济社会发展、科技进步、国防建设、民生改善作出了历史性贡献，是我们党执政兴国的重要支柱和依靠力量。","kind":"plain","legacy":108},{"id":"1101c618","part":"毛中特·习思想","section":"③市场体系","stem":"习近平出席民营企业座谈会并发表重要讲话。他强调，党和国家对民营经济发展的基本方针政策，已经纳入中国特色社会主义制度体系，将一以贯之坚持和落实，不能变，也不会变。","answers":[],"raw":"习近平出席民营企业座谈会并发表重要讲话。他强调，党和国家对民营经济发展的基本方针政策，已经纳入中国特色社会主义制度体系，将一以贯之坚持和落实，不能变，也不会变。","kind":"plain","legacy":109},{"id":"dafc263a","part":"毛中特·习思想","section":"③市场体系","stem":"中共中央、国务院印发了《教育强国建设规划纲要（2024—2035年）》，纲要主要目标是：{{0}}","answers":["到2027年，教育强国建设取得重要阶段性成效。到2035年，建成教育强国。党对教育事业全面领导的制度体系和工作机制系统完备，高质量教育体系全面建成，基础教育普及水平和质量稳居世界前列，学习型社会全面形成，人民群众教育满意度显著跃升，教育服务国家战略能力显著跃升，教育现代化总体实现。"],"raw":"中共中央、国务院印发了《教育强国建设规划纲要（2024—2035年）》，纲要主要目标是：到2027年，教育强国建设取得重要阶段性成效。到2035年，建成教育强国。党对教育事业全面领导的制度体系和工作机制系统完备，高质量教育体系全面建成，基础教育普及水平和质量稳居世界前列，学习型社会全面形成，人民群众教育满意度显著跃升，教育服务国家战略能力显著跃升，教育现代化总体实现。","kind":"cloze","legacy":110},{"id":"576b44a5","part":"毛中特·习思想","section":"③市场体系","stem":"《求是》杂志将发表中共中央总书记、国家主席、中央军委主席习近平的重要文章《以中国式现代化全面推进强国建设、民族复兴伟业》。文章指出，党的领导直接关系中国式现代化的根本方向、前途命运、最终成败。“中国式现代化，是{{0}}”。这是对中国式现代化定性的话，是{{1}}、管根本的。党的领导决定中国式现代化的根本性质。党的领导确保中国式现代化锚定奋斗目标行稳致远。党的领导激发建设中国式现代化的强劲动力。党的领导凝聚建设中国式现代化的磅礴力量。","answers":["中国共产党领导的社会主义现代化","管总"],"raw":"《求是》杂志将发表中共中央总书记、国家主席、中央军委主席习近平的重要文章《以中国式现代化全面推进强国建设、民族复兴伟业》。文章指出，党的领导直接关系中国式现代化的根本方向、前途命运、最终成败。“中国式现代化，是中国共产党领导的社会主义现代化”。这是对中国式现代化定性的话，是管总、管根本的。党的领导决定中国式现代化的根本性质。党的领导确保中国式现代化锚定奋斗目标行稳致远。党的领导激发建设中国式现代化的强劲动力。党的领导凝聚建设中国式现代化的磅礴力量。","kind":"cloze","legacy":111},{"id":"428fb4ea","part":"毛中特·习思想","section":"③市场体系","stem":"我国经济实力、科技实力、综合国力跃上新台阶，中国式现代化迈出新的坚实步伐，第二个百年奋斗目标新征程实现良好开局。","answers":[],"raw":"我国经济实力、科技实力、综合国力跃上新台阶，中国式现代化迈出新的坚实步伐，第二个百年奋斗目标新征程实现良好开局。","kind":"plain","legacy":112},{"id":"642a4dd9","part":"毛中特·习思想","section":"③市场体系","stem":"“十五五”时期是{{0}}、全面发力的关键时期，在基本实现社会主义现代化进程中具有承前启后的重要地位。“十五五”时期我国发展环境面临深刻复杂变化，我国发展处于战略机遇和风险挑战并存、不确定难预料因素增多的时期。我国经济基础稳、优势多、韧性强、潜能大，长期向好的支撑条件和基本趋势没有变，中国特色社会主义制度优势、超大规模市场优势、完整产业体系优势、丰富人才资源优势更加彰显。","answers":["基本实现社会主义现代化夯实基础"],"raw":"“十五五”时期是基本实现社会主义现代化夯实基础、全面发力的关键时期，在基本实现社会主义现代化进程中具有承前启后的重要地位。“十五五”时期我国发展环境面临深刻复杂变化，我国发展处于战略机遇和风险挑战并存、不确定难预料因素增多的时期。我国经济基础稳、优势多、韧性强、潜能大，长期向好的支撑条件和基本趋势没有变，中国特色社会主义制度优势、超大规模市场优势、完整产业体系优势、丰富人才资源优势更加彰显。","kind":"cloze","legacy":113},{"id":"9204f34f","part":"毛中特·习思想","section":"③市场体系","stem":"以中国式现代化全面推进中华民族伟大复兴，完整准确全面贯彻新发展理念，加快构建新发展格局，坚持稳中求进工作总基调，坚持以经济建设为{{0}}，以推动高质量发展为{{1}}，以改革创新为{{2}}，以满足人民日益增长的美好生活需要为{{3}}，以全面从严治党为{{4}}，推动经济实现质的有效提升和量的合理增长，推动人的全面发展、全体人民共同富裕迈出坚实步伐，确保基本实现社会主义现代化取得决定性进展。","answers":["中心","主题","根本动力","根本目的","根本保障"],"raw":"以中国式现代化全面推进中华民族伟大复兴，完整准确全面贯彻新发展理念，加快构建新发展格局，坚持稳中求进工作总基调，坚持以经济建设为中心，以推动高质量发展为主题，以改革创新为根本动力，以满足人民日益增长的美好生活需要为根本目的，以全面从严治党为根本保障，推动经济实现质的有效提升和量的合理增长，推动人的全面发展、全体人民共同富裕迈出坚实步伐，确保基本实现社会主义现代化取得决定性进展。","kind":"cloze","legacy":114},{"id":"a2668af9","part":"毛中特·习思想","section":"③市场体系","stem":"“十五五”时期经济社会发展必须遵循以下原则：{{0}}","answers":["坚持党的全面领导，坚持人民至上，坚持高质量发展，坚持全面深化改革，坚持有效市场和有为政府相结合，坚持统筹发展和安全。"],"raw":"“十五五”时期经济社会发展必须遵循以下原则：坚持党的全面领导，坚持人民至上，坚持高质量发展，坚持全面深化改革，坚持有效市场和有为政府相结合，坚持统筹发展和安全。","kind":"cloze","legacy":115},{"id":"d1fe1b33","part":"毛中特·习思想","section":"③市场体系","stem":"“十五五”时期经济社会发展的主要目标：{{0}}","answers":["高质量发展取得显著成效，科技自立自强水平大幅提高，进一步全面深化改革取得新突破，社会文明程度明显提升，人民生活品质不断提高，美丽中国建设取得新的重大进展，国家安全屏障更加巩固。在此基础上再奋斗五年，到二〇三五年实现我国经济实力、科技实力、国防实力、综合国力和国际影响力大幅跃升，人均国内生产总值达到中等发达国家水平，人民生活更加幸福美好，基本实现社会主义现代化。"],"raw":"“十五五”时期经济社会发展的主要目标：高质量发展取得显著成效，科技自立自强水平大幅提高，进一步全面深化改革取得新突破，社会文明程度明显提升，人民生活品质不断提高，美丽中国建设取得新的重大进展，国家安全屏障更加巩固。在此基础上再奋斗五年，到二〇三五年实现我国经济实力、科技实力、国防实力、综合国力和国际影响力大幅跃升，人均国内生产总值达到中等发达国家水平，人民生活更加幸福美好，基本实现社会主义现代化。","kind":"cloze","legacy":116},{"id":"0791b4ee","part":"毛中特·习思想","section":"③市场体系","stem":"坚持把发展经济的着力点放在实体经济上。","answers":[],"raw":"坚持把发展经济的着力点放在实体经济上。","kind":"plain","legacy":117},{"id":"a90ef79e","part":"毛中特·习思想","section":"③市场体系","stem":"坚持和完善社会主义基本经济制度，更好发挥经济体制改革牵引作用，完善宏观经济治理体系，确保高质量发展行稳致远。要充分激发各类经营主体活力，加快完善要素市场化配置体制机制，提升宏观经济治理效能。","answers":[],"raw":"坚持和完善社会主义基本经济制度，更好发挥经济体制改革牵引作用，完善宏观经济治理体系，确保高质量发展行稳致远。要充分激发各类经营主体活力，加快完善要素市场化配置体制机制，提升宏观经济治理效能。","kind":"plain","legacy":118},{"id":"8bf5875b","part":"毛中特·习思想","section":"③市场体系","stem":"牢固树立和践行绿水青山就是金山银山的理念，以碳达峰碳中和为{{0}}，协同推进降碳、减污、扩绿、增长，筑牢生态安全屏障，增强绿色发展动能。","answers":["牵引"],"raw":"牢固树立和践行绿水青山就是金山银山的理念，以碳达峰碳中和为牵引，协同推进降碳、减污、扩绿、增长，筑牢生态安全屏障，增强绿色发展动能。","kind":"cloze","legacy":119},{"id":"8b494bd1","part":"史纲","section":"","stem":"中国近代史上第一个不平等条约：{{0}}","answers":["《南京条约》（1843年签订中英《虎门条约》,作为对《南京条约》的补充。1844年签订中美《望厦条约》、中法《黄埔条约》。以上四个条约被称为第一批不平等条约。）"],"raw":"中国近代史上第一个不平等条约：《南京条约》（1843年签订中英《虎门条约》,作为对《南京条约》的补充。1844年签订中美《望厦条约》、中法《黄埔条约》。以上四个条约被称为第一批不平等条约。）","kind":"cloze","legacy":120},{"id":"011e36d0","part":"史纲","section":"","stem":"近代以来中华民族面临两大历史任务：{{0}}","answers":["争取民族独立和人民解放；实现国家富强和人民富裕。"],"raw":"近代以来中华民族面临两大历史任务：争取民族独立和人民解放；实现国家富强和人民富裕。","kind":"cloze","legacy":121},{"id":"51bfedb1","part":"史纲","section":"","stem":"近代中国的主要矛盾：{{0}}","answers":["帝国主义和中华民族的矛盾、封建主义和人民大众的矛盾。"],"raw":"近代中国的主要矛盾：帝国主义和中华民族的矛盾、封建主义和人民大众的矛盾。","kind":"cloze","legacy":122},{"id":"c81cab6c","part":"史纲","section":"","stem":"帝国主义列强对中国争夺和瓜分的图谋在1894年中日甲午战争爆发后达到高潮。1898年至1899年，德、俄、英、法、日等国竞相租借港湾和划分势力范围。","answers":[],"raw":"帝国主义列强对中国争夺和瓜分的图谋在1894年中日甲午战争爆发后达到高潮。1898年至1899年，德、俄、英、法、日等国竞相租借港湾和划分势力范围。","kind":"plain","legacy":123},{"id":"ff0a46e2","part":"史纲","section":"","stem":"1895年签订的《马关条约》：{{0}}","answers":["割让台湾全岛及所有附属岛屿和澎湖列岛给日本；赔偿日本2亿两白银；增设沙市、重庆、苏州、杭州为商埠；允许日本在中国投资建厂。"],"raw":"1895年签订的《马关条约》：割让台湾全岛及所有附属岛屿和澎湖列岛给日本；赔偿日本2亿两白银；增设沙市、重庆、苏州、杭州为商埠；允许日本在中国投资建厂。","kind":"cloze","legacy":124},{"id":"c59a07c2","part":"史纲","section":"","stem":"开创了中国近代向西方学习的新风：{{0}}","answers":["魏源，编写《海国图志》，提出“师夷长技以制夷”的思想。"],"raw":"开创了中国近代向西方学习的新风：魏源，编写《海国图志》，提出“师夷长技以制夷”的思想。","kind":"cloze","legacy":125},{"id":"15cb65ea","part":"史纲","section":"","stem":"1895年严复在《救亡决论》中提出“救亡”的口号，翻译《天演论》,介绍“物竞天择”“适者生存”的社会进化论思想。","answers":[],"raw":"1895年严复在《救亡决论》中提出“救亡”的口号，翻译《天演论》,介绍“物竞天择”“适者生存”的社会进化论思想。","kind":"plain","legacy":126},{"id":"fb3c3722","part":"史纲","section":"","stem":"孙中山1894年创立革命团体兴中会，喊出了“振兴中华”这个时代的最强音。","answers":[],"raw":"孙中山1894年创立革命团体兴中会，喊出了“振兴中华”这个时代的最强音。","kind":"plain","legacy":127},{"id":"befb2ea3","part":"史纲","section":"","stem":"洋务运动的指导思想：{{0}}","answers":["中学为体、西学为用。"],"raw":"洋务运动的指导思想：中学为体、西学为用。","kind":"cloze","legacy":128},{"id":"7f469a8e","part":"史纲","section":"","stem":"最先完整表述洋务运动指导思想的是：{{0}}","answers":["冯桂芬《校邠庐抗议》。"],"raw":"最先完整表述洋务运动指导思想的是：冯桂芬《校邠庐抗议》。","kind":"cloze","legacy":129},{"id":"c1b85884","part":"史纲","section":"","stem":"洋务运动的目标：{{0}}","answers":["“自强”、“求富”。"],"raw":"洋务运动的目标：“自强”、“求富”。","kind":"cloze","legacy":130},{"id":"cbf6d7a1","part":"史纲","section":"","stem":"民用企业多数采取的方式是：{{0}}","answers":["官督商办（这些企业基本上是资本主义性质的近代企业）。"],"raw":"民用企业多数采取的方式是：官督商办（这些企业基本上是资本主义性质的近代企业）。","kind":"cloze","legacy":131},{"id":"1be0ba1b","part":"史纲","section":"","stem":"洋务运动创办新式学堂主要有三种：{{0}}","answers":["翻译学堂、工艺学堂、军事学堂。"],"raw":"洋务运动创办新式学堂主要有三种：翻译学堂、工艺学堂、军事学堂。","kind":"cloze","legacy":132},{"id":"63fde25d","part":"史纲","section":"","stem":"中国近代教育的开端：{{0}}","answers":["洋务运动。"],"raw":"中国近代教育的开端：洋务运动。","kind":"cloze","legacy":133},{"id":"f0955e22","part":"史纲","section":"","stem":"洋务运动失败的标志：{{0}}","answers":["甲午战争一役，北洋水师全军覆没。"],"raw":"洋务运动失败的标志：甲午战争一役，北洋水师全军覆没。","kind":"cloze","legacy":134},{"id":"7c7295eb","part":"史纲","section":"","stem":"揭开了戊戌维新序幕的是：{{0}}","answers":["1895年康有为联合在京参加会试的举人共同发起“公车上书”。"],"raw":"揭开了戊戌维新序幕的是：1895年康有为联合在京参加会试的举人共同发起“公车上书”。","kind":"cloze","legacy":135},{"id":"c97623a2","part":"史纲","section":"","stem":"资产阶级思想与封建主义思想在中国的第一次正面交锋：{{0}}","answers":["维新派与守旧派的论战。"],"raw":"资产阶级思想与封建主义思想在中国的第一次正面交锋：维新派与守旧派的论战。","kind":"cloze","legacy":136},{"id":"576c6d67","part":"史纲","section":"","stem":"资产阶级新文化开始打破封建文化独占文化阵地的局面的起点是：{{0}}","answers":["戊戌维新运动。"],"raw":"资产阶级新文化开始打破封建文化独占文化阵地的局面的起点是：戊戌维新运动。","kind":"cloze","legacy":137},{"id":"0cf29d85","part":"史纲","section":"","stem":"中国近代高等国立教育的开端：{{0}}","answers":["京师大学堂的创设。"],"raw":"中国近代高等国立教育的开端：京师大学堂的创设。","kind":"cloze","legacy":138},{"id":"4c11e4a6","part":"史纲","section":"","stem":"中国民族资产阶级登上政治舞台的第一次表演：{{0}}","answers":["戊戌维新运动。"],"raw":"中国民族资产阶级登上政治舞台的第一次表演：戊戌维新运动。","kind":"cloze","legacy":139},{"id":"858cd3c6","part":"史纲","section":"","stem":"《中国问题的真解决》指出：{{0}}","answers":["只有推翻清朝政府的统治，“以一个新的、开明的、进步的政府来代替旧政府”，“把过时的满清君主政体改变为‘中华民国’”，才能真正解决中国问题；提出中国资产阶级革命派与改良派的根本不同之处：资产阶级革命派选择以武装起义推翻清王朝。"],"raw":"《中国问题的真解决》指出：只有推翻清朝政府的统治，“以一个新的、开明的、进步的政府来代替旧政府”，“把过时的满清君主政体改变为‘中华民国’”，才能真正解决中国问题；提出中国资产阶级革命派与改良派的根本不同之处：资产阶级革命派选择以武装起义推翻清王朝。","kind":"cloze","legacy":140},{"id":"28bd94cf","part":"史纲","section":"","stem":"第一个资产阶级性质的革命团体：{{0}}","answers":["兴中会，立誓“驱除鞑虏，恢复中国，创立合众政府”。"],"raw":"第一个资产阶级性质的革命团体：兴中会，立誓“驱除鞑虏，恢复中国，创立合众政府”。","kind":"cloze","legacy":141},{"id":"5516f380","part":"史纲","section":"","stem":"近代中国第一个领导资产阶级革命的全国性政党：{{0}}","answers":["中国同盟会，同盟会以《民报》为机关报，并确定了革命纲领。"],"raw":"近代中国第一个领导资产阶级革命的全国性政党：中国同盟会，同盟会以《民报》为机关报，并确定了革命纲领。","kind":"cloze","legacy":142},{"id":"74cb065b","part":"史纲","section":"","stem":"同盟会的政治纲领：{{0}}","answers":["民族主义（驱除鞑虏，恢复中华）；民权主义（创立民国）；民生主义（平均地权）"],"raw":"同盟会的政治纲领：民族主义（驱除鞑虏，恢复中华）；民权主义（创立民国）；民生主义（平均地权）","kind":"cloze","legacy":143},{"id":"9fc10f7f","part":"史纲","section":"","stem":"资产阶级革命派与改良派论战的焦点是：{{0}}","answers":["要不要以革命的手段推翻清王朝。"],"raw":"资产阶级革命派与改良派论战的焦点是：要不要以革命的手段推翻清王朝。","kind":"cloze","legacy":144},{"id":"a100f6ac","part":"史纲","section":"","stem":"掀起了辛亥革命的高潮，打开了清王朝统治的缺口的是：{{0}}","answers":["武昌起义。"],"raw":"掀起了辛亥革命的高潮，打开了清王朝统治的缺口的是：武昌起义。","kind":"cloze","legacy":145},{"id":"4e7c7c0c","part":"史纲","section":"","stem":"清帝退位这一事件标志着：{{0}}","answers":["在中国延续了两千多年的封建帝制终于覆灭。"],"raw":"清帝退位这一事件标志着：在中国延续了两千多年的封建帝制终于覆灭。","kind":"cloze","legacy":146},{"id":"67197e9f","part":"史纲","section":"","stem":"一次比较完全意义上的资产阶级民主革命，拉开了近代以来中国发生的深刻社会变革序幕的事件是：{{0}}","answers":["辛亥革命。"],"raw":"一次比较完全意义上的资产阶级民主革命，拉开了近代以来中国发生的深刻社会变革序幕的事件是：辛亥革命。","kind":"cloze","legacy":147},{"id":"e4521d1d","part":"史纲","section":"","stem":"整个中国民族资产阶级领导的旧民主主义革命的终结的标志：{{0}}","answers":["护法运动的失败。"],"raw":"整个中国民族资产阶级领导的旧民主主义革命的终结的标志：护法运动的失败。","kind":"cloze","legacy":148},{"id":"bdff872a","part":"史纲","section":"","stem":"辛亥革命失败的根本原因：{{0}}","answers":["在半殖民地半封建的中国，资本主义的建国方案是行不通的。"],"raw":"辛亥革命失败的根本原因：在半殖民地半封建的中国，资本主义的建国方案是行不通的。","kind":"cloze","legacy":149},{"id":"e6bd83e8","part":"史纲","section":"","stem":"资产阶级革命派的这些弱点、错误，根源于：{{0}}","answers":["中国民族资产阶级的软弱性和妥协性。"],"raw":"资产阶级革命派的这些弱点、错误，根源于：中国民族资产阶级的软弱性和妥协性。","kind":"cloze","legacy":150},{"id":"4d3f5500","part":"史纲","section":"","stem":"新文化运动的意义：{{0}}","answers":["中国历史上一次前所未有的启蒙运动和空前深刻的思想解放运动。"],"raw":"新文化运动的意义：中国历史上一次前所未有的启蒙运动和空前深刻的思想解放运动。","kind":"cloze","legacy":151},{"id":"eeac8133","part":"史纲","section":"","stem":"五四以前新文化运动的局限：{{0}}","answers":["倡导批判孔学，是为了给中国发展资本主义扫清障碍；把改造国民性置于优先的地位；使用的还是资产阶级的方法。"],"raw":"五四以前新文化运动的局限：倡导批判孔学，是为了给中国发展资本主义扫清障碍；把改造国民性置于优先的地位；使用的还是资产阶级的方法。","kind":"cloze","legacy":152},{"id":"53c64fe6","part":"史纲","section":"","stem":"十月革命的意义：{{0}}","answers":["推动中国的先进分子从资产阶级民主主义转向社会主义。"],"raw":"十月革命的意义：推动中国的先进分子从资产阶级民主主义转向社会主义。","kind":"cloze","legacy":153},{"id":"65dd2d89","part":"史纲","section":"","stem":"五四运动使中国工人阶级开始以独立的姿态登上历史舞台。","answers":[],"raw":"五四运动使中国工人阶级开始以独立的姿态登上历史舞台。","kind":"plain","legacy":154},{"id":"375e2798","part":"史纲","section":"","stem":"五四运动的历史特点：{{0}}","answers":["是一场以先进青年知识分子为先锋、广大人民群众参加的彻底反帝反封建的伟大爱国革命运动；是一场中国人民为拯救民族危亡、捍卫民族尊严、凝聚民族力量而掀起的伟大社会革命运动；是一场传播新思想、新文化、新知识的伟大思想启蒙运动和新文化运动。"],"raw":"五四运动的历史特点：是一场以先进青年知识分子为先锋、广大人民群众参加的彻底反帝反封建的伟大爱国革命运动；是一场中国人民为拯救民族危亡、捍卫民族尊严、凝聚民族力量而掀起的伟大社会革命运动；是一场传播新思想、新文化、新知识的伟大思想启蒙运动和新文化运动。","kind":"cloze","legacy":155},{"id":"a499786c","part":"史纲","section":"","stem":"新文化运动的发展：{{0}}","answers":["在五四以后的新文化运动中马克思主义开始逐步地在思想文化领域中发挥指导作用。"],"raw":"新文化运动的发展：在五四以后的新文化运动中马克思主义开始逐步地在思想文化领域中发挥指导作用。","kind":"cloze","legacy":156},{"id":"eb36c416","part":"史纲","section":"","stem":"中国共产党成立的伟大意义：{{0}}","answers":["深刻改变了近代以后中华民族发展的方向和进程，深刻改变了中国人民和中华民族的前途和命运，深刻改变了世界发展的趋势和格局。"],"raw":"中国共产党成立的伟大意义：深刻改变了近代以后中华民族发展的方向和进程，深刻改变了中国人民和中华民族的前途和命运，深刻改变了世界发展的趋势和格局。","kind":"cloze","legacy":157},{"id":"be36d2c9","part":"史纲","section":"","stem":"中国革命的首要问题：{{0}}","answers":["分清敌友。"],"raw":"中国革命的首要问题：分清敌友。","kind":"cloze","legacy":158},{"id":"ea59f5d8","part":"史纲","section":"","stem":"中共二大：{{0}}","answers":["第一次提出了反帝反封建的民主革命纲领，采取群众路线的方法。"],"raw":"中共二大：第一次提出了反帝反封建的民主革命纲领，采取群众路线的方法。","kind":"cloze","legacy":159},{"id":"5bcf2e10","part":"史纲","section":"","stem":"国共合作的政治基础：{{0}}","answers":["新三民主义，其政纲同中共在民主革命阶段的纲领基本一致。"],"raw":"国共合作的政治基础：新三民主义，其政纲同中共在民主革命阶段的纲领基本一致。","kind":"cloze","legacy":160},{"id":"355a17e1","part":"史纲","section":"","stem":"第一次国共合作的正式形成的标志：{{0}}","answers":["国民党一大的成功召开。"],"raw":"第一次国共合作的正式形成的标志：国民党一大的成功召开。","kind":"cloze","legacy":161},{"id":"4bf4f2d4","part":"史纲","section":"","stem":"大革命高潮：{{0}}","answers":["五卅运动掀起了全国范围的大革命高潮。"],"raw":"大革命高潮：五卅运动掀起了全国范围的大革命高潮。","kind":"cloze","legacy":162},{"id":"52c47f5d","part":"史纲","section":"","stem":"中共四大：{{0}}","answers":["提出了无产阶级在民主革命中的领导权问题，提出了工农联盟问题，对民主革命的内容做了更加完整的规定。"],"raw":"中共四大：提出了无产阶级在民主革命中的领导权问题，提出了工农联盟问题，对民主革命的内容做了更加完整的规定。","kind":"cloze","legacy":163},{"id":"c747f7cb","part":"史纲","section":"","stem":"大革命失败标志着：{{0}}","answers":["国共合作全面破裂。"],"raw":"大革命失败标志着：国共合作全面破裂。","kind":"cloze","legacy":164},{"id":"0a5bbe4c","part":"史纲","section":"","stem":"大革命失败的主观原因：{{0}}","answers":["大革命后期犯了右倾机会主义错误，放弃了无产阶级的领导权，不善于将马克思列宁主义基本原理同中国革命的具体实际结合起来。"],"raw":"大革命失败的主观原因：大革命后期犯了右倾机会主义错误，放弃了无产阶级的领导权，不善于将马克思列宁主义基本原理同中国革命的具体实际结合起来。","kind":"cloze","legacy":165},{"id":"cf8ca5ad","part":"史纲","section":"","stem":"《中国的红色政权为什么能够存在？》和《井冈山的斗争》的内容：{{0}}","answers":["论证了红色政权能够长期存在并发展的主客观条件，提出了“工农武装割据”的思想。"],"raw":"《中国的红色政权为什么能够存在？》和《井冈山的斗争》的内容：论证了红色政权能够长期存在并发展的主客观条件，提出了“工农武装割据”的思想。","kind":"cloze","legacy":166},{"id":"a905cfef","part":"史纲","section":"","stem":"《星星之火，可以燎原》的内容：{{0}}","answers":["提出了党把工作重心由城市转移到农村，建立和发展红色政权。"],"raw":"《星星之火，可以燎原》的内容：提出了党把工作重心由城市转移到农村，建立和发展红色政权。","kind":"cloze","legacy":167},{"id":"ef3d1952","part":"史纲","section":"","stem":"《井冈山土地法》：{{0}}","answers":["以立法的形式，首次肯定了广大农民以革命的手段获得土地的权利。由于缺乏经验，这个土地法关于没收一切土地归苏维埃政府所有、禁止土地买卖等方面的规定，并不适合中国农村的实际。"],"raw":"《井冈山土地法》：以立法的形式，首次肯定了广大农民以革命的手段获得土地的权利。由于缺乏经验，这个土地法关于没收一切土地归苏维埃政府所有、禁止土地买卖等方面的规定，并不适合中国农村的实际。","kind":"cloze","legacy":168},{"id":"16d3d454","part":"史纲","section":"","stem":"《兴国土地法》：{{0}}","answers":["将“没收一切土地”改为“没收一切公共土地及地主阶级的土地”，保护了中农的利益使之不受侵犯。"],"raw":"《兴国土地法》：将“没收一切土地”改为“没收一切公共土地及地主阶级的土地”，保护了中农的利益使之不受侵犯。","kind":"cloze","legacy":169},{"id":"b6bcb122","part":"史纲","section":"","stem":"遵义会议：{{0}}","answers":["集中解决了当时具有决定意义的军事问题和组织问题。"],"raw":"遵义会议：集中解决了当时具有决定意义的军事问题和组织问题。","kind":"cloze","legacy":170},{"id":"6cc3017a","part":"史纲","section":"","stem":"遵义会议的鲜明特点：{{0}}","answers":["坚持真理、修正错误。"],"raw":"遵义会议的鲜明特点：坚持真理、修正错误。","kind":"cloze","legacy":171},{"id":"85e6a715","part":"史纲","section":"","stem":"红军长征的胜利的意义：{{0}}","answers":["中国共产党所领导的革命力量有了新的落脚点和战略基地。长征胜利宣告了国民党反动派消灭中国共产党和红军的图谋彻底失败，宣告了中国共产党和红军肩负着民族希望胜利实现了北上抗日的战略转移，实现了中国共产党和中国革命事业从挫折走向胜利的伟大转折。"],"raw":"红军长征的胜利的意义：中国共产党所领导的革命力量有了新的落脚点和战略基地。长征胜利宣告了国民党反动派消灭中国共产党和红军的图谋彻底失败，宣告了中国共产党和红军肩负着民族希望胜利实现了北上抗日的战略转移，实现了中国共产党和中国革命事业从挫折走向胜利的伟大转折。","kind":"cloze","legacy":172},{"id":"35cb49e7","part":"史纲","section":"","stem":"西安事变的意义：{{0}}","answers":["其和平解决成为时局转换的枢纽，十年内战的局面基本结束，国内和平初步实现。"],"raw":"西安事变的意义：其和平解决成为时局转换的枢纽，十年内战的局面基本结束，国内和平初步实现。","kind":"cloze","legacy":173},{"id":"8b6a527f","part":"史纲","section":"","stem":"瓦窑堡会议的内容：{{0}}","answers":["阐明了建立抗日民族统一战线的可能性，批评了党内长期存在的“左”倾冒险主义、关门主义的错误倾向；提出了在抗日的条件下与民族资产阶级重建统一战线的新政策；规定了建立广泛的抗日民族统一战线的具体政策，决定将“人民共和国”口号代替“工农共和国”。"],"raw":"瓦窑堡会议的内容：阐明了建立抗日民族统一战线的可能性，批评了党内长期存在的“左”倾冒险主义、关门主义的错误倾向；提出了在抗日的条件下与民族资产阶级重建统一战线的新政策；规定了建立广泛的抗日民族统一战线的具体政策，决定将“人民共和国”口号代替“工农共和国”。","kind":"cloze","legacy":174},{"id":"0198af29","part":"史纲","section":"","stem":"国共第二次合作的形成标志：{{0}}","answers":["国民党中央通讯社发表《中国共产党为公布国共合作宣言》；蒋介石发表实际承认共产党合法地位的谈话。"],"raw":"国共第二次合作的形成标志：国民党中央通讯社发表《中国共产党为公布国共合作宣言》；蒋介石发表实际承认共产党合法地位的谈话。","kind":"cloze","legacy":175},{"id":"2f585da6","part":"史纲","section":"","stem":"国共第二次合作的新特点：{{0}}","answers":["广泛的民族性和复杂的阶级矛盾；国共双方有政权有军队的合作；没有正式的固定的组织形式和协商一致的具体的共同纲领。"],"raw":"国共第二次合作的新特点：广泛的民族性和复杂的阶级矛盾；国共双方有政权有军队的合作；没有正式的固定的组织形式和协商一致的具体的共同纲领。","kind":"cloze","legacy":176},{"id":"bf043526","part":"史纲","section":"","stem":"平型关大捷是{{0}}，粉碎了日军不可战胜的神话。","answers":["全民族抗战以来中国军队的第一次重大胜利"],"raw":"平型关大捷是全民族抗战以来中国军队的第一次重大胜利，粉碎了日军不可战胜的神话。","kind":"cloze","legacy":177},{"id":"891f2957","part":"史纲","section":"","stem":"台儿庄战役是{{0}}。","answers":["抗战以来国民党正面战场取得的最重大胜利"],"raw":"台儿庄战役是抗战以来国民党正面战场取得的最重大胜利。","kind":"cloze","legacy":178},{"id":"ad69e7ba","part":"史纲","section":"","stem":"《论持久战》的战略方针：{{0}}","answers":["战略相持阶段是中国抗日战争取得最后胜利的最关键的阶段。"],"raw":"《论持久战》的战略方针：战略相持阶段是中国抗日战争取得最后胜利的最关键的阶段。","kind":"cloze","legacy":179},{"id":"245e69aa","part":"史纲","section":"","stem":"巩固抗日民族统一战线的策略总方针：{{0}}","answers":["发展进步势力，争取中间势力，孤立顽固势力。"],"raw":"巩固抗日民族统一战线的策略总方针：发展进步势力，争取中间势力，孤立顽固势力。","kind":"cloze","legacy":180},{"id":"2426edbe","part":"史纲","section":"","stem":"抗日民主根据地经济建设方面：{{0}}","answers":["减租减息，发展生产。"],"raw":"抗日民主根据地经济建设方面：减租减息，发展生产。","kind":"cloze","legacy":181},{"id":"34ec49e5","part":"史纲","section":"","stem":"整风运动的主要内容：{{0}}","answers":["反对主观主义以整顿学风、反对宗派主义以整顿党风、反对党八股以整顿文风。"],"raw":"整风运动的主要内容：反对主观主义以整顿学风、反对宗派主义以整顿党风、反对党八股以整顿文风。","kind":"cloze","legacy":182},{"id":"8638ec62","part":"史纲","section":"","stem":"调查研究是{{0}}，加强调查研究是{{1}}。","answers":["把理论和实际结合起来的不可或缺的中间环节","转变党的作风的基础一环"],"raw":"调查研究是把理论和实际结合起来的不可或缺的中间环节，加强调查研究是转变党的作风的基础一环。","kind":"cloze","legacy":183},{"id":"d1d9ac9f","part":"史纲","section":"","stem":"三大作风：{{0}}","answers":["理论和实践相结合的作风，人民群众紧密地联系在一起的作风，自我批评的作风。"],"raw":"三大作风：理论和实践相结合的作风，人民群众紧密地联系在一起的作风，自我批评的作风。","kind":"cloze","legacy":184},{"id":"92c2aaf9","part":"史纲","section":"","stem":"中共七大的历史性贡献：{{0}}","answers":["把毛泽东思想确立为党的指导思想并写入党章，标志着党在政治上思想上组织上走向成熟。"],"raw":"中共七大的历史性贡献：把毛泽东思想确立为党的指导思想并写入党章，标志着党在政治上思想上组织上走向成熟。","kind":"cloze","legacy":185},{"id":"d276c397","part":"史纲","section":"","stem":"抗日战争取得完全胜利的重要标志：{{0}}","answers":["收回台湾以及澎湖列岛。"],"raw":"抗日战争取得完全胜利的重要标志：收回台湾以及澎湖列岛。","kind":"cloze","legacy":186},{"id":"631663f3","part":"史纲","section":"","stem":"抗日战争胜利的意义：{{0}}","answers":["为中华民族由近代以来陷入深重危机走向伟大复兴确立了历史转折点。"],"raw":"抗日战争胜利的意义：为中华民族由近代以来陷入深重危机走向伟大复兴确立了历史转折点。","kind":"cloze","legacy":187},{"id":"b7185777","part":"史纲","section":"","stem":"重庆谈判：{{0}}","answers":["国共双方签署《政府与中共代表会谈纪要》，即双十协定，确认和平建国的基本方针，同意“长期合作，坚决避免内战”。中共目的是为争取和平民主。"],"raw":"重庆谈判：国共双方签署《政府与中共代表会谈纪要》，即双十协定，确认和平建国的基本方针，同意“长期合作，坚决避免内战”。中共目的是为争取和平民主。","kind":"cloze","legacy":188},{"id":"8387756f","part":"史纲","section":"","stem":"重庆政协会议：{{0}}","answers":["政协的协议及其他协议还不是新民主主义性质的，但它有利于冲破蒋介石的独裁统治和实行民主政治，有利于和平建国。"],"raw":"重庆政协会议：政协的协议及其他协议还不是新民主主义性质的，但它有利于冲破蒋介石的独裁统治和实行民主政治，有利于和平建国。","kind":"cloze","legacy":189},{"id":"51b90bbd","part":"史纲","section":"","stem":"中国共产党领导的多党合作和政治协商格局的形成","answers":[],"raw":"中国共产党领导的多党合作和政治协商格局的形成","kind":"plain","legacy":190},{"id":"b81ac396","part":"史纲","section":"","stem":"中国共产党提出五一口号：{{0}}","answers":["这个口号得到各民主党派和社会各界的热烈响应，揭开了中国共产党同各党派、各团体、各族各界人士协商建国的序幕，奠定了中国共产党领导的多党合作和政治协商制度的基础。"],"raw":"中国共产党提出五一口号：这个口号得到各民主党派和社会各界的热烈响应，揭开了中国共产党同各党派、各团体、各族各界人士协商建国的序幕，奠定了中国共产党领导的多党合作和政治协商制度的基础。","kind":"cloze","legacy":191},{"id":"04159703","part":"史纲","section":"","stem":"民主党派的《对时局的意见》：{{0}}","answers":["这个政治声明表明，中国各民主党派和无党派民主人士自愿接受中国共产党的领导，决心走人民革命的道路，拥护建立人民民主的新中国。"],"raw":"民主党派的《对时局的意见》：这个政治声明表明，中国各民主党派和无党派民主人士自愿接受中国共产党的领导，决心走人民革命的道路，拥护建立人民民主的新中国。","kind":"cloze","legacy":192},{"id":"cae3fc4c","part":"史纲","section":"","stem":"毛泽东的谈话：{{0}}","answers":["毛泽东在同有关人士谈话时提出，民主党派应“积极参政，共同建设新中国”。民主党派参加新政协并将在新中国参政，这标志着民主党派地位的根本变化。中国共产党领导的多党合作和政治协商制度，正是在这个基础上形成的。"],"raw":"毛泽东的谈话：毛泽东在同有关人士谈话时提出，民主党派应“积极参政，共同建设新中国”。民主党派参加新政协并将在新中国参政，这标志着民主党派地位的根本变化。中国共产党领导的多党合作和政治协商制度，正是在这个基础上形成的。","kind":"cloze","legacy":193},{"id":"cc215814","part":"史纲","section":"72.人民政协会议的召开与《共同纲领》的制定","stem":"完成创建新中国的任务，是{{0}}。会议通过的《中国人民政治协商会议组织法》《中华人民共和国中央人民政府组织法》和《中国人民政治协商会议共同纲领》，被认为{{1}}。","answers":["由中国人民政治协商会议来承担的","是新中国奠基的3个历史性文件"],"raw":"完成创建新中国的任务，是由中国人民政治协商会议来承担的。会议通过的《中国人民政治协商会议组织法》《中华人民共和国中央人民政府组织法》和《中国人民政治协商会议共同纲领》，被认为是新中国奠基的3个历史性文件。","kind":"cloze","legacy":194},{"id":"9d03736d","part":"史纲","section":"72.人民政协会议的召开与《共同纲领》的制定","stem":"《共同纲领》在当时是{{0}}，起着临时宪法的作用。中共七届二中全会的决议和毛泽东的《论人民民主专政》，构成了《共同纲领》的基础。","answers":["全国人民的大宪章"],"raw":"《共同纲领》在当时是全国人民的大宪章，起着临时宪法的作用。中共七届二中全会的决议和毛泽东的《论人民民主专政》，构成了《共同纲领》的基础。","kind":"cloze","legacy":195},{"id":"a63b87e6","part":"史纲","section":"72.人民政协会议的召开与《共同纲领》的制定","stem":"人民政协的召开，标志着{{0}}。","answers":["中国的新型政党制度——中国共产党领导的多党合作和政治协商制度的确立"],"raw":"人民政协的召开，标志着中国的新型政党制度——中国共产党领导的多党合作和政治协商制度的确立。","kind":"cloze","legacy":196},{"id":"fbc6279b","part":"史纲","section":"72.人民政协会议的召开与《共同纲领》的制定","stem":"新中国成立后，为巩固民族独立，维护国家主权和安全：{{0}}","answers":["第一，从根本上改变了旧中国“跪倒在地上办外交”的局面：新中国废除了帝国主义国家依据不平等条约在中国享有的一切特权；收回了外国列强在中国的兵营，驻扎在中国领土上的一切外国军队被迫撤走；收回了海关治权，中国人民重新掌握了国门的钥匙。第二，提出“另起炉灶”“打扫干净屋子再请客”“一边倒”的外交方针。新中国同苏联订立了《中苏友好同盟互助条约》和有关协定。"],"raw":"新中国成立后，为巩固民族独立，维护国家主权和安全：第一，从根本上改变了旧中国“跪倒在地上办外交”的局面：新中国废除了帝国主义国家依据不平等条约在中国享有的一切特权；收回了外国列强在中国的兵营，驻扎在中国领土上的一切外国军队被迫撤走；收回了海关治权，中国人民重新掌握了国门的钥匙。第二，提出“另起炉灶”“打扫干净屋子再请客”“一边倒”的外交方针。新中国同苏联订立了《中苏友好同盟互助条约》和有关协定。","kind":"cloze","legacy":197},{"id":"4960e0a7","part":"史纲","section":"72.人民政协会议的召开与《共同纲领》的制定","stem":"抗美援朝，保家卫国：{{0}}","answers":["经过艰苦卓绝的战斗，打破了美军不可战胜的神话。抗美援朝战争打出了国威军威，打出了中国人民的精气神，捍卫了新中国安全，彰显了新中国大国地位。抗美援朝战争的伟大胜利，是中国人民站起来后屹立于世界东方的宣言书，是中华民族走向伟大复兴的重要里程碑。"],"raw":"抗美援朝，保家卫国：经过艰苦卓绝的战斗，打破了美军不可战胜的神话。抗美援朝战争打出了国威军威，打出了中国人民的精气神，捍卫了新中国安全，彰显了新中国大国地位。抗美援朝战争的伟大胜利，是中国人民站起来后屹立于世界东方的宣言书，是中华民族走向伟大复兴的重要里程碑。","kind":"cloze","legacy":198},{"id":"1abc494f","part":"史纲","section":"72.人民政协会议的召开与《共同纲领》的制定","stem":"社会主义工业化的起步：{{0}}","answers":["“一五计划”时期工业生产取得的成就，为我国建立独立完整的工业体系奠定了基础。"],"raw":"社会主义工业化的起步：“一五计划”时期工业生产取得的成就，为我国建立独立完整的工业体系奠定了基础。","kind":"cloze","legacy":199},{"id":"5ee60003","part":"史纲","section":"76.社会主义基本制度的确立","stem":"社会主义经济制度的确立：{{0}}","answers":["随着1956年社会主义改造的完成，以生产资料公有制、按劳分配和计划经济体制为特征的社会主义经济制度建立起来，这是中国进入社会主义社会最主要的标志。"],"raw":"社会主义经济制度的确立：随着1956年社会主义改造的完成，以生产资料公有制、按劳分配和计划经济体制为特征的社会主义经济制度建立起来，这是中国进入社会主义社会最主要的标志。","kind":"cloze","legacy":200},{"id":"9b976d4c","part":"史纲","section":"76.社会主义基本制度的确立","stem":"社会主义政治制度的确立：{{0}}","answers":["1954年9月，中华人民共和国第一届全国人民代表大会第一次会议在北京召开。大会讨论并通过了《中华人民共和国宪法》。"],"raw":"社会主义政治制度的确立：1954年9月，中华人民共和国第一届全国人民代表大会第一次会议在北京召开。大会讨论并通过了《中华人民共和国宪法》。","kind":"cloze","legacy":201},{"id":"1bba0b66","part":"史纲","section":"76.社会主义基本制度的确立","stem":"毛泽东提出的马克思主义同中国实际“第二次结合”的任务，为{{0}}，提供了基本的指导原则。","answers":["探索适合中国情况的社会主义建设道路"],"raw":"毛泽东提出的马克思主义同中国实际“第二次结合”的任务，为探索适合中国情况的社会主义建设道路，提供了基本的指导原则。","kind":"cloze","legacy":202},{"id":"9aacaff6","part":"史纲","section":"76.社会主义基本制度的确立","stem":"中共十一届三中全会：{{0}}","answers":["第一，内容上，全会冲破长期“左”的错误的严重束缚，彻底否定了“两个凡是”的错误方针，高度评价了关于真理标准问题的讨论，并且断然否定“以阶级斗争为纲”的指导思想，作出了把工作重点转移到社会主义现代化建设上来和实行改革开放的战略决策，重新确立了马克思主义的思想路线、政治路线和组织路线。第二，意义上，党的十一届三中全会的胜利召开，结束了粉碎“四人帮”后党和国家工作徘徊中前进的局面，开启了我国改革开放和社会主义现代化建设新时期，实现了历史性的伟大转折。会议形成了以邓小平为核心的党的中央领导集体。从这次全会开始，改革开放和开创中国特色社会主义的大幕拉开，邓小平理论也逐步形成和发展起来。"],"raw":"中共十一届三中全会：第一，内容上，全会冲破长期“左”的错误的严重束缚，彻底否定了“两个凡是”的错误方针，高度评价了关于真理标准问题的讨论，并且断然否定“以阶级斗争为纲”的指导思想，作出了把工作重点转移到社会主义现代化建设上来和实行改革开放的战略决策，重新确立了马克思主义的思想路线、政治路线和组织路线。第二，意义上，党的十一届三中全会的胜利召开，结束了粉碎“四人帮”后党和国家工作徘徊中前进的局面，开启了我国改革开放和社会主义现代化建设新时期，实现了历史性的伟大转折。会议形成了以邓小平为核心的党的中央领导集体。从这次全会开始，改革开放和开创中国特色社会主义的大幕拉开，邓小平理论也逐步形成和发展起来。","kind":"cloze","legacy":203},{"id":"5185671d","part":"史纲","section":"76.社会主义基本制度的确立","stem":"中共十八届三中：{{0}}","answers":["开启了新时代全面深化改革、系统整体设计推进改革新征程，开创了我国改革开放全新局面。"],"raw":"中共十八届三中：开启了新时代全面深化改革、系统整体设计推进改革新征程，开创了我国改革开放全新局面。","kind":"cloze","legacy":204},{"id":"22c8c130","part":"思想道德与法治","section":"绪论+思想专题","stem":"德法关系：{{0}}","answers":["思想道德和法律在调节领域、调节方式、调节目标等方面存在很大不同，思想道德建设为法治建设提供思想指引和价值基础，法治建设为思想道德建设提供制度支撑和法律保障。"],"raw":"德法关系：思想道德和法律在调节领域、调节方式、调节目标等方面存在很大不同，思想道德建设为法治建设提供思想指引和价值基础，法治建设为思想道德建设提供制度支撑和法律保障。","kind":"cloze","legacy":205},{"id":"1f7927b8","part":"思想道德与法治","section":"绪论+思想专题","stem":"个人与社会的关系：{{0}}","answers":["个人与社会的关系，最根本的是个人利益与社会利益的关系。"],"raw":"个人与社会的关系：个人与社会的关系，最根本的是个人利益与社会利益的关系。","kind":"cloze","legacy":206},{"id":"0059b3db","part":"思想道德与法治","section":"绪论+思想专题","stem":"人生观：{{0}}","answers":["包括人生目的，人生态度，人生价值。人生目的是人生观的核心，决定人生道路、态度和价值选择，“服务人民、奉献社会”代表了人类社会迄今最先进的人生追求。"],"raw":"人生观：包括人生目的，人生态度，人生价值。人生目的是人生观的核心，决定人生道路、态度和价值选择，“服务人民、奉献社会”代表了人类社会迄今最先进的人生追求。","kind":"cloze","legacy":207},{"id":"ce247146","part":"思想道德与法治","section":"绪论+思想专题","stem":"人生价值评价标准：{{0}}","answers":["根本尺度是看一个人的实践活动是否符合社会发展的客观规律，是否促进了历史的进步。在今天，衡量人生价值的标准，最重要的就是看一个人是否用自己的劳动和聪明才智为国家和社会真诚奉献，为人民群众尽心尽力服务。"],"raw":"人生价值评价标准：根本尺度是看一个人的实践活动是否符合社会发展的客观规律，是否促进了历史的进步。在今天，衡量人生价值的标准，最重要的就是看一个人是否用自己的劳动和聪明才智为国家和社会真诚奉献，为人民群众尽心尽力服务。","kind":"cloze","legacy":208},{"id":"971d13fe","part":"思想道德与法治","section":"绪论+思想专题","stem":"自我价值和社会价值：{{0}}","answers":["两者是辩证统一的，自我价值是个体生存和发展的必要条件，是个体为社会创造更大价值的前提。社会价值是社会存在和发展的重要条件，是个体自我完善、全面发展的保障。"],"raw":"自我价值和社会价值：两者是辩证统一的，自我价值是个体生存和发展的必要条件，是个体为社会创造更大价值的前提。社会价值是社会存在和发展的重要条件，是个体自我完善、全面发展的保障。","kind":"cloze","legacy":209},{"id":"2794039a","part":"思想道德与法治","section":"绪论+思想专题","stem":"理想划分标准：{{0}}","answers":["个人理想和社会理想（主体），近期理想和远期理想（时序），生活理想、职业理想、道德理想和政治理想（内容），科学理想和非科学理想（性质），崇高理想和一般理想（层次）。"],"raw":"理想划分标准：个人理想和社会理想（主体），近期理想和远期理想（时序），生活理想、职业理想、道德理想和政治理想（内容），科学理想和非科学理想（性质），崇高理想和一般理想（层次）。","kind":"cloze","legacy":210},{"id":"9539301a","part":"思想道德与法治","section":"绪论+思想专题","stem":"理想的特征：{{0}}","answers":["①超越性 ②实践性 ③时代性"],"raw":"理想的特征：①超越性 ②实践性 ③时代性","kind":"cloze","legacy":211},{"id":"ca41dabc","part":"思想道德与法治","section":"绪论+思想专题","stem":"信念体系：{{0}}","answers":["高层次的信念决定低层次的信念，低层次的信念服从高层次的信念。信仰是最高层次的信念。"],"raw":"信念体系：高层次的信念决定低层次的信念，低层次的信念服从高层次的信念。信仰是最高层次的信念。","kind":"cloze","legacy":212},{"id":"c0732e8d","part":"思想道德与法治","section":"绪论+思想专题","stem":"信念的特征：{{0}}","answers":["①执着性 ②支撑性 ③多样性"],"raw":"信念的特征：①执着性 ②支撑性 ③多样性","kind":"cloze","legacy":213},{"id":"9f9420f6","part":"思想道德与法治","section":"绪论+思想专题","stem":"个人理想和社会理想：{{0}}","answers":["个人理想以社会理想为指引，社会理想是对个人理想的凝练和升华。"],"raw":"个人理想和社会理想：个人理想以社会理想为指引，社会理想是对个人理想的凝练和升华。","kind":"cloze","legacy":214},{"id":"e181b47b","part":"思想道德与法治","section":"绪论+思想专题","stem":"中国精神：{{0}}","answers":["以爱国主义为核心的民族精神，以改革创新为核心的时代精神。"],"raw":"中国精神：以爱国主义为核心的民族精神，以改革创新为核心的时代精神。","kind":"cloze","legacy":215},{"id":"a9c148d5","part":"思想道德与法治","section":"绪论+思想专题","stem":"爱国主义的要求：{{0}}","answers":["①爱祖国的大好河山——领土完整、统一；②爱自己的骨肉同胞——试金石；③爱祖国的灿烂文化——文化是灵魂、精神基因、摇篮；④爱自己的国家。"],"raw":"爱国主义的要求：①爱祖国的大好河山——领土完整、统一；②爱自己的骨肉同胞——试金石；③爱祖国的灿烂文化——文化是灵魂、精神基因、摇篮；④爱自己的国家。","kind":"cloze","legacy":216},{"id":"5cdc1b6a","part":"思想道德与法治","section":"绪论+思想专题","stem":"做新时代的爱国者：{{0}}","answers":["当代中国，爱国主义的本质就是坚持爱国、爱党和爱社会主义的高度统一。"],"raw":"做新时代的爱国者：当代中国，爱国主义的本质就是坚持爱国、爱党和爱社会主义的高度统一。","kind":"cloze","legacy":217},{"id":"63070c5f","part":"思想道德与法治","section":"绪论+思想专题","stem":"维护祖国统一和民族团结：{{0}}","answers":["①深化对党的民族理论和民族政策的认识，②要牢固树立正确的祖国观、民族观，③要铸牢中华民族共同体意识，④要尊重兄弟民族的传统文化、风俗习惯和宗教信仰。"],"raw":"维护祖国统一和民族团结：①深化对党的民族理论和民族政策的认识，②要牢固树立正确的祖国观、民族观，③要铸牢中华民族共同体意识，④要尊重兄弟民族的传统文化、风俗习惯和宗教信仰。","kind":"cloze","legacy":218},{"id":"12b6d73b","part":"思想道德与法治","section":"绪论+思想专题","stem":"社会主义核心价值观：{{0}}","answers":["坚持和发展中国特色社会主义的价值遵循，增进社会团结奋进的最大公约数，提高国家文化软实力的迫切要求。"],"raw":"社会主义核心价值观：坚持和发展中国特色社会主义的价值遵循，增进社会团结奋进的最大公约数，提高国家文化软实力的迫切要求。","kind":"cloze","legacy":219},{"id":"7b93b769","part":"思想道德与法治","section":"绪论+思想专题","stem":"社会主义核心价值观的显著特征：{{0}}","answers":["①先进性 ②人民性 ③真实性"],"raw":"社会主义核心价值观的显著特征：①先进性 ②人民性 ③真实性","kind":"cloze","legacy":220},{"id":"de8ff048","part":"思想道德与法治","section":"道德专题","stem":"道德起源：{{0}}","answers":["①劳动是道德起源的首要前提，是道德起源的第一个历史前提。②社会关系是道德赖以产生的客观条件。③人的自我意识：是道德产生的主观条件，意识是道德产生的思想认识前提。"],"raw":"道德起源：①劳动是道德起源的首要前提，是道德起源的第一个历史前提。②社会关系是道德赖以产生的客观条件。③人的自我意识：是道德产生的主观条件，意识是道德产生的思想认识前提。","kind":"cloze","legacy":221},{"id":"88370a10","part":"思想道德与法治","section":"道德专题","stem":"社会主义道德：{{0}}","answers":["核心是为人民服务，原则是集体主义。"],"raw":"社会主义道德：核心是为人民服务，原则是集体主义。","kind":"cloze","legacy":222},{"id":"5b650121","part":"思想道德与法治","section":"道德专题","stem":"社会公德：{{0}}","answers":["遵纪守法是全体公民都必须遵循的最基本行为准则。"],"raw":"社会公德：遵纪守法是全体公民都必须遵循的最基本行为准则。","kind":"cloze","legacy":223},{"id":"1e6051ec","part":"思想道德与法治","section":"道德专题","stem":"公共生活的特征：{{0}}","answers":["①广泛性 ②开放性 ③复杂性 ④多样性"],"raw":"公共生活的特征：①广泛性 ②开放性 ③复杂性 ④多样性","kind":"cloze","legacy":224},{"id":"b5a72c84","part":"思想道德与法治","section":"道德专题","stem":"职业道德：{{0}}","answers":["“劳动最光荣、劳动最崇高、劳动最伟大、劳动最美丽”。幸福源自奋斗，成功在于奉献，平凡孕育伟大。干一行爱一行，爱一行钻一行，精益求精，尽职尽责。"],"raw":"职业道德：“劳动最光荣、劳动最崇高、劳动最伟大、劳动最美丽”。幸福源自奋斗，成功在于奉献，平凡孕育伟大。干一行爱一行，爱一行钻一行，精益求精，尽职尽责。","kind":"cloze","legacy":225},{"id":"1817e894","part":"思想道德与法治","section":"道德专题","stem":"个人品德：{{0}}","answers":["个人品德是通过社会道德教育和个人自觉的道德修养所形成的稳定的心理状态和行为习惯。"],"raw":"个人品德：个人品德是通过社会道德教育和个人自觉的道德修养所形成的稳定的心理状态和行为习惯。","kind":"cloze","legacy":226},{"id":"48dc9c2f","part":"思想道德与法治","section":"法治专题","stem":"法律：{{0}}","answers":["由国家创制和实施的行为规范，国家强制性是法律规范区别于其他社会规范的一个重要特征。物质资料的生产方式是决定法律本质、内容和发展方向的根本因素。法律是统治阶级意识的体现，并不是统治阶级意志的全部，仅仅是上升为国家意志的那部分意志。"],"raw":"法律：由国家创制和实施的行为规范，国家强制性是法律规范区别于其他社会规范的一个重要特征。物质资料的生产方式是决定法律本质、内容和发展方向的根本因素。法律是统治阶级意识的体现，并不是统治阶级意志的全部，仅仅是上升为国家意志的那部分意志。","kind":"cloze","legacy":227},{"id":"aea50a4f","part":"思想道德与法治","section":"法治专题","stem":"法律运行：{{0}}","answers":["法律制定（立法）是法律运行的起始性和关键性环节（龙头环节），法律执行（执法）是法律实施和实现的重要环节，法律适用（司法）是最后防线，法律遵守（守法）是法律实施和实现的基本途径。"],"raw":"法律运行：法律制定（立法）是法律运行的起始性和关键性环节（龙头环节），法律执行（执法）是法律实施和实现的重要环节，法律适用（司法）是最后防线，法律遵守（守法）是法律实施和实现的基本途径。","kind":"cloze","legacy":228},{"id":"52786d85","part":"思想道德与法治","section":"法治专题","stem":"社会主义法律的本质特征：{{0}}","answers":["①党的主张和人民意志的统一 ②科学性和先进性 ③中国特色社会主义建设的重要保障"],"raw":"社会主义法律的本质特征：①党的主张和人民意志的统一 ②科学性和先进性 ③中国特色社会主义建设的重要保障","kind":"cloze","legacy":229},{"id":"15171a8b","part":"思想道德与法治","section":"法治专题","stem":"中国特色社会主义法治道路的核心要义：{{0}}","answers":["坚持党的领导，坚持中国特色社会主义制度，贯彻中国特色社会主义法治理论。"],"raw":"中国特色社会主义法治道路的核心要义：坚持党的领导，坚持中国特色社会主义制度，贯彻中国特色社会主义法治理论。","kind":"cloze","legacy":230},{"id":"9d0c7a44","part":"思想道德与法治","section":"法治专题","stem":"建设中国特色社会主义法治体系：{{0}}","answers":["（1）建设法治中国，要以建设中国特色社会主义法治体系为总抓手。（2）构成内容：①完备的法律规范体系，是中国特色社会主义法治体系的前提和制度基础，②高效的法治实施体系，是中国特色社会主义法治体系的重点，③严密的法治监督体系，是宪法法律有效实施的重要保障，④有力的法治保障体系，是全面依法治国的重要依托，⑤完善的党内法规体系，是中国特色社会主义法治体系的本质要求和重要内容。"],"raw":"建设中国特色社会主义法治体系：（1）建设法治中国，要以建设中国特色社会主义法治体系为总抓手。（2）构成内容：①完备的法律规范体系，是中国特色社会主义法治体系的前提和制度基础，②高效的法治实施体系，是中国特色社会主义法治体系的重点，③严密的法治监督体系，是宪法法律有效实施的重要保障，④有力的法治保障体系，是全面依法治国的重要依托，⑤完善的党内法规体系，是中国特色社会主义法治体系的本质要求和重要内容。","kind":"cloze","legacy":231},{"id":"4ef643c7","part":"思想道德与法治","section":"法治专题","stem":"全面推进国家各方面工作法治化：{{0}}","answers":["深化立法领域改革，深入推进依法行政，健全公正执法司法体制机制，完善推进法治社会建设机制，加强涉外法治建设。"],"raw":"全面推进国家各方面工作法治化：深化立法领域改革，深入推进依法行政，健全公正执法司法体制机制，完善推进法治社会建设机制，加强涉外法治建设。","kind":"cloze","legacy":232},{"id":"91e84139","part":"思想道德与法治","section":"法治专题","stem":"维护宪法权威：{{0}}","answers":["宪法是国家的根本法，实现了党的主张和人民意志的高度统一，是始终沿着中国特色社会主义道路前进的根本法制保障，是实现国家认同、凝聚社会共识、促进个人发展的基本准则，是维系一个国家、一个民族凝聚力的根本纽带。坚持依法治国首先要坚持依宪治国，坚持依法执政首先要坚持依宪执政。"],"raw":"维护宪法权威：宪法是国家的根本法，实现了党的主张和人民意志的高度统一，是始终沿着中国特色社会主义道路前进的根本法制保障，是实现国家认同、凝聚社会共识、促进个人发展的基本准则，是维系一个国家、一个民族凝聚力的根本纽带。坚持依法治国首先要坚持依宪治国，坚持依法执政首先要坚持依宪执政。","kind":"cloze","legacy":233},{"id":"f891b65e","part":"思想道德与法治","section":"法治专题","stem":"法治思维的特征：{{0}}","answers":["①正当性 ②规范性 ③逻辑性 ④科学性"],"raw":"法治思维的特征：①正当性 ②规范性 ③逻辑性 ④科学性","kind":"cloze","legacy":234},{"id":"0a0536ee","part":"思想道德与法治","section":"法治专题","stem":"权利与义务：{{0}}","answers":["法律权利与法律义务不可分割，相互依存。法律权利的实现必须以相应法律义务的履行为条件；法律义务的设定和履行也必须以法律权利的行使为依据。有些法律权利与法律义务具有复合性的关系，即一个行为可以同时是权利行为和义务行为。二者相一致的情况下，一个人无论是行使权利还是履行义务，都是对自己有利的。"],"raw":"权利与义务：法律权利与法律义务不可分割，相互依存。法律权利的实现必须以相应法律义务的履行为条件；法律义务的设定和履行也必须以法律权利的行使为依据。有些法律权利与法律义务具有复合性的关系，即一个行为可以同时是权利行为和义务行为。二者相一致的情况下，一个人无论是行使权利还是履行义务，都是对自己有利的。","kind":"cloze","legacy":235},{"id":"a08e1e99","part":"形势与政策","section":"","stem":"1月5日，第41届中国·哈尔滨国际冰雪节开幕，本届冰雪节以“冰雪同梦亚洲同心”为{{0}}。","answers":["主题"],"raw":"1月5日，第41届中国·哈尔滨国际冰雪节开幕，本届冰雪节以“冰雪同梦亚洲同心”为主题。","kind":"cloze","legacy":236},{"id":"13dc263c","part":"形势与政策","section":"","stem":"2月5日下午，国家主席习近平在北京人民大会堂同来华进行国事访问的巴基斯坦总统扎尔达里举行会谈。习近平指出，中国和巴基斯坦是{{0}}。","answers":["铁杆朋友和全天候战略合作伙伴"],"raw":"2月5日下午，国家主席习近平在北京人民大会堂同来华进行国事访问的巴基斯坦总统扎尔达里举行会谈。习近平指出，中国和巴基斯坦是铁杆朋友和全天候战略合作伙伴。","kind":"cloze","legacy":237},{"id":"c7bc6777","part":"形势与政策","section":"","stem":"2月7日中午，习近平强调，本届亚冬会以“冰雪同梦、亚洲同心”为{{0}}，承载着亚洲人民对于和平、发展、友谊的共同愿望和追求。","answers":["主题"],"raw":"2月7日中午，习近平强调，本届亚冬会以“冰雪同梦、亚洲同心”为主题，承载着亚洲人民对于和平、发展、友谊的共同愿望和追求。","kind":"cloze","legacy":238},{"id":"4d71b4b8","part":"形势与政策","section":"","stem":"2025中关村论坛年会将于3月27日至31日在北京举办，本届论坛年会以“新质生产力与全球科技合作”为{{0}}。","answers":["年度主题"],"raw":"2025中关村论坛年会将于3月27日至31日在北京举办，本届论坛年会以“新质生产力与全球科技合作”为年度主题。","kind":"cloze","legacy":239},{"id":"c7da298a","part":"形势与政策","section":"","stem":"中央一号文件发布：{{0}}","answers":["2025年3月，中央一号文件聚焦“农业新质生产力”，提出了乡村振兴的新举措。文件首次提出“农业新质生产力”，旨在通过科技创新驱动农业现代化转型，包括生物育种、无人机技术、人工智能和数字技术等。⁠⁣2025年中央一号文件以深化改革为引擎，以确保国家粮食安全和不发生规模性返贫为底线，着力于壮大富民产业、提升乡村建设水平、完善乡村治理，并通过一系列具有创新性和针对性的举措，为扎实推进乡村全面振兴、建设农业强国描绘了清晰的“路线图”。"],"raw":"中央一号文件发布：2025年3月，中央一号文件聚焦“农业新质生产力”，提出了乡村振兴的新举措。文件首次提出“农业新质生产力”，旨在通过科技创新驱动农业现代化转型，包括生物育种、无人机技术、人工智能和数字技术等。⁠⁣2025年中央一号文件以深化改革为引擎，以确保国家粮食安全和不发生规模性返贫为底线，着力于壮大富民产业、提升乡村建设水平、完善乡村治理，并通过一系列具有创新性和针对性的举措，为扎实推进乡村全面振兴、建设农业强国描绘了清晰的“路线图”。","kind":"cloze","legacy":240},{"id":"536d0b11","part":"形势与政策","section":"","stem":"3月19日至21日，以“融金聚智点亮南方”为{{0}}。","answers":["主题的2025全球南方金融家论坛将在北京举行"],"raw":"3月19日至21日，以“融金聚智点亮南方”为主题的2025全球南方金融家论坛将在北京举行。","kind":"cloze","legacy":241},{"id":"e088b697","part":"形势与政策","section":"","stem":"3月25日至28日，博鳌亚洲论坛2025年年会将在博鳌举行，聚焦“在世界变局中共创亚洲未来”大会主题。","answers":[],"raw":"3月25日至28日，博鳌亚洲论坛2025年年会将在博鳌举行，聚焦“在世界变局中共创亚洲未来”大会主题。","kind":"plain","legacy":242},{"id":"a1f46a8a","part":"形势与政策","section":"","stem":"当地时间4月10日，在世界贸易组织成立30周年纪念活动上，各方普遍认为，美方将关税作为极限施压、谋取私利的武器，严重侵犯各国正当权益，严重违反世界贸易组织规则，严重损害以规则为{{0}}，严重冲击全球经济秩序稳定。中方一贯认为，关税战、贸易战没有赢家。中方不愿打，但也不怕打，绝不会坐视中国人民的正当权益被剥夺，绝不会坐视国际经贸规则和多边贸易体制被破坏。中方愿同各方一道，秉持真正的多边主义，有效维护多边贸易体制，推动建设开放型世界经济，为{{1}}。","answers":["基础的多边贸易体制","全球发展增添确定性与稳定性"],"raw":"当地时间4月10日，在世界贸易组织成立30周年纪念活动上，各方普遍认为，美方将关税作为极限施压、谋取私利的武器，严重侵犯各国正当权益，严重违反世界贸易组织规则，严重损害以规则为基础的多边贸易体制，严重冲击全球经济秩序稳定。中方一贯认为，关税战、贸易战没有赢家。中方不愿打，但也不怕打，绝不会坐视中国人民的正当权益被剥夺，绝不会坐视国际经贸规则和多边贸易体制被破坏。中方愿同各方一道，秉持真正的多边主义，有效维护多边贸易体制，推动建设开放型世界经济，为全球发展增添确定性与稳定性。","kind":"cloze","legacy":243},{"id":"4e35713c","part":"形势与政策","section":"","stem":"当地时间4月14日至15日，中共中央总书记、国家主席对越南进行国事访问。双方发布《中华人民共和国和越南社会主义共和国关于持续深化全面战略合作伙伴关系、加快构建具有战略意义的中越命运共同体的联合声明》。国家主席指出，中越两国是{{0}}，是{{1}}。","answers":["山水相连的社会主义邻邦","具有战略意义的命运共同体"],"raw":"当地时间4月14日至15日，中共中央总书记、国家主席对越南进行国事访问。双方发布《中华人民共和国和越南社会主义共和国关于持续深化全面战略合作伙伴关系、加快构建具有战略意义的中越命运共同体的联合声明》。国家主席指出，中越两国是山水相连的社会主义邻邦，是具有战略意义的命运共同体。","kind":"cloze","legacy":244},{"id":"7dc74190","part":"形势与政策","section":"","stem":"5月6日，国家主席习近平同欧洲理事会主席科斯塔、欧盟委员会主席冯德莱恩互致贺电，热烈庆祝中国和欧盟建交50周年。习近平指出，中国和欧盟是{{0}}，也是{{1}}、支持全球化的两大市场、倡导多样性的两大文明。","answers":["全面战略伙伴","推动多极化的两大力量"],"raw":"5月6日，国家主席习近平同欧洲理事会主席科斯塔、欧盟委员会主席冯德莱恩互致贺电，热烈庆祝中国和欧盟建交50周年。习近平指出，中国和欧盟是全面战略伙伴，也是推动多极化的两大力量、支持全球化的两大市场、倡导多样性的两大文明。","kind":"cloze","legacy":245},{"id":"ec07f01d","part":"形势与政策","section":"","stem":"5月8日上午，俄罗斯总统普京同中国国家主席习近平在莫斯科克里姆林宫举行会谈。两国元首就中俄关系和重大国际和地区问题深入交换意见，一致同意坚定不移深化战略协作，推动中俄关系稳定、健康、高水平发展；共同弘扬正确二战史观，维护联合国权威和地位，维护国际公平正义。","answers":[],"raw":"5月8日上午，俄罗斯总统普京同中国国家主席习近平在莫斯科克里姆林宫举行会谈。两国元首就中俄关系和重大国际和地区问题深入交换意见，一致同意坚定不移深化战略协作，推动中俄关系稳定、健康、高水平发展；共同弘扬正确二战史观，维护联合国权威和地位，维护国际公平正义。","kind":"plain","legacy":246},{"id":"66ceeb22","part":"形势与政策","section":"","stem":"5月13日下午，国家主席习近平在北京人民大会堂同来华进行国事访问的巴西总统卢拉举行会谈。习近平强调，站在新的历史起点，中巴双方一要坚持战略互信，夯实中巴命运共同体根基。二要坚持扩大合作，丰富中巴命运共同体内涵。三要坚持人文交流，增加中巴命运共同体活力，以明年举办“中巴文化年”为{{0}}。四要坚持多边协作，提升中巴命运共同体成色。","answers":["契机"],"raw":"5月13日下午，国家主席习近平在北京人民大会堂同来华进行国事访问的巴西总统卢拉举行会谈。习近平强调，站在新的历史起点，中巴双方一要坚持战略互信，夯实中巴命运共同体根基。二要坚持扩大合作，丰富中巴命运共同体内涵。三要坚持人文交流，增加中巴命运共同体活力，以明年举办“中巴文化年”为契机。四要坚持多边协作，提升中巴命运共同体成色。","kind":"cloze","legacy":247},{"id":"63b99e1f","part":"形势与政策","section":"","stem":"5月14日，我国在酒泉卫星发射中心成功发射了长征二号丁运载火箭，搭载了12颗太空计算卫星星座，标志我国整轨互联太空计算星座“三体计算星座”正式进入组网阶段。本次发射的一箭12星是“三体计算星座”的首次发射，也是{{0}}“星算”计划的首次发射。","answers":["国星宇航"],"raw":"5月14日，我国在酒泉卫星发射中心成功发射了长征二号丁运载火箭，搭载了12颗太空计算卫星星座，标志我国整轨互联太空计算星座“三体计算星座”正式进入组网阶段。本次发射的一箭12星是“三体计算星座”的首次发射，也是国星宇航“星算”计划的首次发射。","kind":"cloze","legacy":248},{"id":"12d9c831","part":"形势与政策","section":"","stem":"5月14日以“教育发展与变革：{{0}}","answers":["智能时代”为主题的2025世界数字教育大会在武汉开幕。"],"raw":"5月14日以“教育发展与变革：智能时代”为主题的2025世界数字教育大会在武汉开幕。","kind":"cloze","legacy":249},{"id":"89f1b931","part":"形势与政策","section":"","stem":"5月20日，国家主席习近平向2025年上海合作组织减贫和可持续发展论坛致贺信。习近平指出，消除贫困是{{0}}，也是{{1}}。中国经过艰苦努力，成功打赢脱贫攻坚战，提前10年实现联合国2030年可持续发展议程减贫目标，走出一条中国特色减贫道路，谱写了人类反贫困历史新篇章。","answers":["全球性难题","世界各国共同目标"],"raw":"5月20日，国家主席习近平向2025年上海合作组织减贫和可持续发展论坛致贺信。习近平指出，消除贫困是全球性难题，也是世界各国共同目标。中国经过艰苦努力，成功打赢脱贫攻坚战，提前10年实现联合国2030年可持续发展议程减贫目标，走出一条中国特色减贫道路，谱写了人类反贫困历史新篇章。","kind":"cloze","legacy":250},{"id":"5f8fe686","part":"形势与政策","section":"","stem":"6月14日15时56分，我国在酒泉卫星发射中心用长征二号丁运载火箭，成功将电磁监测卫星“张衡一号”02星发射升空，这是我国首颗地球物理场探测业务卫星。","answers":[],"raw":"6月14日15时56分，我国在酒泉卫星发射中心用长征二号丁运载火箭，成功将电磁监测卫星“张衡一号”02星发射升空，这是我国首颗地球物理场探测业务卫星。","kind":"plain","legacy":251},{"id":"23eaa920","part":"形势与政策","section":"","stem":"6月16日下午，哈萨克斯坦总统托卡耶夫同中国国家主席习近平在阿斯塔纳总统府举行会谈。习近平强调，中哈都处在各自发展振兴的关键阶段，两国要齐心协力推进全方位合作。一要以高水平战略互信引领双边关系发展，二要以高质量共建“一带一路”促进两国合作提质升级，三要以全方位安全合作维护两国和平安宁，四要以多元化人文交流夯实中哈友好根基，办好哈萨克斯坦“中国旅游年”。","answers":[],"raw":"6月16日下午，哈萨克斯坦总统托卡耶夫同中国国家主席习近平在阿斯塔纳总统府举行会谈。习近平强调，中哈都处在各自发展振兴的关键阶段，两国要齐心协力推进全方位合作。一要以高水平战略互信引领双边关系发展，二要以高质量共建“一带一路”促进两国合作提质升级，三要以全方位安全合作维护两国和平安宁，四要以多元化人文交流夯实中哈友好根基，办好哈萨克斯坦“中国旅游年”。","kind":"plain","legacy":252},{"id":"8be887c8","part":"形势与政策","section":"","stem":"7月10日，习近平向全球文明对话部长级会议致贺信指出，多样文明是{{0}}。历史昭示我们，文明的繁盛、人类的进步，都离不开文明的交流互鉴。当前，国际形势变乱交织，人类站在新的十字路口，迫切需要以文明交流超越文明隔阂，以文明互鉴超越文明冲突。","answers":["世界的本色"],"raw":"7月10日，习近平向全球文明对话部长级会议致贺信指出，多样文明是世界的本色。历史昭示我们，文明的繁盛、人类的进步，都离不开文明的交流互鉴。当前，国际形势变乱交织，人类站在新的十字路口，迫切需要以文明交流超越文明隔阂，以文明互鉴超越文明冲突。","kind":"cloze","legacy":253},{"id":"9582d94c","part":"形势与政策","section":"","stem":"2025世界人工智能大会论坛时间为{{0}}，本届大会以“智能时代同球共济”为{{1}}。","answers":["7月26日至28日","主题"],"raw":"2025世界人工智能大会论坛时间为7月26日至28日，本届大会以“智能时代同球共济”为主题。","kind":"cloze","legacy":254},{"id":"b3df09b3","part":"形势与政策","section":"","stem":"2025年9月1日，上海合作组织成员国元首理事会第二十五次会议在天津梅江会展中心举行。习近平主持会议并发表题为《牢记初心使命 开创美好未来》的重要讲话。一是{{0}}。二是{{1}}。三是{{2}}。四是{{3}}。五是{{4}}。","answers":["坚持求同存异","坚持互利共赢","坚持开放包容","坚持公平正义","坚持务实高效"],"raw":"2025年9月1日，上海合作组织成员国元首理事会第二十五次会议在天津梅江会展中心举行。习近平主持会议并发表题为《牢记初心使命 开创美好未来》的重要讲话。一是坚持求同存异。二是坚持互利共赢。三是坚持开放包容。四是坚持公平正义。五是坚持务实高效。","kind":"cloze","legacy":255},{"id":"3484aeea","part":"形势与政策","section":"","stem":"9月8日，国家主席习近平出席金砖国家领导人线上峰会，并发表题为《团结合作砥砺前行》的重要讲话。习近平提出3点建议：{{0}}","answers":["第一，坚持多边主义，捍卫国际公平正义。第二，坚持开放共赢，维护国际经贸秩序。第三，坚持团结合作，凝聚共同发展合力。"],"raw":"9月8日，国家主席习近平出席金砖国家领导人线上峰会，并发表题为《团结合作砥砺前行》的重要讲话。习近平提出3点建议：第一，坚持多边主义，捍卫国际公平正义。第二，坚持开放共赢，维护国际经贸秩序。第三，坚持团结合作，凝聚共同发展合力。","kind":"cloze","legacy":256},{"id":"b0442b91","part":"形势与政策","section":"","stem":"9月19日，习近平同美国总统特朗普通电话。习近平强调，中美关系十分重要。中美完全可以相互成就、共同繁荣，造福两国、惠及世界。要实现这个愿景，双方都要相向而行、付出努力，实现相互尊重、和平共处、合作共赢。","answers":[],"raw":"9月19日，习近平同美国总统特朗普通电话。习近平强调，中美关系十分重要。中美完全可以相互成就、共同繁荣，造福两国、惠及世界。要实现这个愿景，双方都要相向而行、付出努力，实现相互尊重、和平共处、合作共赢。","kind":"plain","legacy":257},{"id":"f9009773","part":"形势与政策","section":"","stem":"今年是《巴黎协定》达成10周年，也是提交新一轮国家自主贡献的重要节点，全球气候治理进入关键阶段。领导人分享三点看法：{{0}}","answers":["一要坚定信心。二要担当尽责。三要深化合作。"],"raw":"今年是《巴黎协定》达成10周年，也是提交新一轮国家自主贡献的重要节点，全球气候治理进入关键阶段。领导人分享三点看法：一要坚定信心。二要担当尽责。三要深化合作。","kind":"cloze","legacy":258},{"id":"4b5fb785","part":"形势与政策","section":"","stem":"十四届全国人大常委会第十八次会议24日经表决,通过了关于设立台湾光复纪念日的决定,以法律形式将10月25日设立为{{0}}。设立台湾光复纪念日，在国家层面举行纪念活动，有利于体现台湾是{{1}}，巩固国际社会坚持一个中国的格局，引领两岸同胞传承、弘扬伟大抗战精神，激励全体中华儿女为{{2}}、民族复兴而团结奋斗。","answers":["台湾光复纪念日","中国不可分割一部分这一无可辩驳的历史事实","祖国统一"],"raw":"十四届全国人大常委会第十八次会议24日经表决,通过了关于设立台湾光复纪念日的决定,以法律形式将10月25日设立为台湾光复纪念日。设立台湾光复纪念日，在国家层面举行纪念活动，有利于体现台湾是中国不可分割一部分这一无可辩驳的历史事实，巩固国际社会坚持一个中国的格局，引领两岸同胞传承、弘扬伟大抗战精神，激励全体中华儿女为祖国统一、民族复兴而团结奋斗。","kind":"cloze","legacy":259},{"id":"243cb8fa","part":"形势与政策","section":"","stem":"雅鲁藏布江下游水电工程已获核准：{{0}}","answers":["雅鲁藏布江下游水电工程将为加快构建新发展格局、推动高质量发展发挥积极作用，对深入推进“双碳”战略、应对全球气候变化具有重大意义。雅鲁藏布江下游水电工程是推进低碳发展的绿色工程。雅鲁藏布江下游水电工程是实现富民兴藏的民心工程。雅鲁藏布江下游水电工程是坚持生态优先的安全工程。"],"raw":"雅鲁藏布江下游水电工程已获核准：雅鲁藏布江下游水电工程将为加快构建新发展格局、推动高质量发展发挥积极作用，对深入推进“双碳”战略、应对全球气候变化具有重大意义。雅鲁藏布江下游水电工程是推进低碳发展的绿色工程。雅鲁藏布江下游水电工程是实现富民兴藏的民心工程。雅鲁藏布江下游水电工程是坚持生态优先的安全工程。","kind":"cloze","legacy":260},{"id":"1c969884","part":"马原","section":"","stem":"物质存在于意识之外","answers":["对"],"raw":"物质存在于意识之外","kind":"judge","src":"物质存在于意识之外。✅"},{"id":"fe5dee96","part":"马原","section":"","stem":"列宁通过物质和意识的关系去定义的物质","answers":["对"],"raw":"列宁通过物质和意识的关系去定义的物质","kind":"judge","src":"列宁通过物质和意识的关系去定义的物质。✅"},{"id":"acc1866e","part":"马原","section":"","stem":"物质概念和具体的物的关系：抽象具体","answers":["对"],"raw":"物质概念和具体的物的关系：抽象具体","kind":"judge","src":"物质概念和具体的物的关系：抽象具体。✅ 部分整体（❌）"},{"id":"cf083488","part":"马原","section":"","stem":"部分整体","answers":["错"],"raw":"部分整体","kind":"judge","src":"物质概念和具体的物的关系：抽象具体。✅ 部分整体（❌）"},{"id":"6dc78851","part":"马原","section":"","stem":"物质的唯一和共同属性是{{0}}。","answers":["——客观实在"],"raw":"物质的唯一和共同属性是——客观实在。","kind":"cloze"},{"id":"cb803f3c","part":"马原","section":"","stem":"物质的固有，根本属性，存在方式是{{0}}。","answers":["——运动"],"raw":"物质的固有，根本属性，存在方式是——运动。","kind":"cloze"},{"id":"3bd18df3","part":"马原","section":"","stem":"世界上除了运动着的物质之外什么也没有","answers":["对"],"raw":"世界上除了运动着的物质之外什么也没有","kind":"judge","src":"世界上除了运动着的物质之外什么也没有。✅"},{"id":"3750798d","part":"马原","section":"","stem":"意识不外乎是移入人脑改造过的物质的东西","answers":["对"],"raw":"意识不外乎是移入人脑改造过的物质的东西","kind":"judge","src":"意识不外乎是移入人脑改造过的物质的东西。✅"},{"id":"0e174abc","part":"马原","section":"","stem":"物质运动不可分割","answers":["对"],"raw":"物质运动不可分割","kind":"judge","src":"物质运动不可分割✅"},{"id":"c27aa4ed","part":"马原","section":"","stem":"物质和意识的对立是相对的","answers":["对"],"raw":"物质和意识的对立是相对的","kind":"judge","src":"物质和意识的对立是相对的。✅（在讨论第一第二的时候）"},{"id":"aed79f99","part":"马原","section":"","stem":"静止是运动的衡量尺度","answers":["对"],"raw":"静止是运动的衡量尺度","kind":"judge","src":"静止是运动的衡量尺度。✅"},{"id":"a62d77e4","part":"马原","section":"","stem":"时空是运动的衡量尺度","answers":["对"],"raw":"时空是运动的衡量尺度","kind":"judge","src":"时空是运动的衡量尺度。✅"},{"id":"abde4c18","part":"马原","section":"","stem":"物质、运动、时间、空间，不可分割，具有内在统一性","answers":["对"],"raw":"物质、运动、时间、空间，不可分割，具有内在统一性","kind":"judge","src":"物质、运动、时间、空间，不可分割，具有内在统一性。✅"},{"id":"d3b39fb0","part":"马原","section":"","stem":"意识来源于人脑","answers":["错"],"raw":"意识来源于人脑","kind":"judge","src":"意识来源于人脑❌  意识来源于物质、实践✅"},{"id":"5025719b","part":"马原","section":"","stem":"意识来源于物质、实践","answers":["对"],"raw":"意识来源于物质、实践","kind":"judge","src":"意识来源于人脑❌  意识来源于物质、实践✅"},{"id":"c1bf9ad3","part":"马原","section":"","stem":"所有意识都必须有客观来源","answers":["对"],"raw":"所有意识都必须有客观来源","kind":"judge","src":"所有意识都必须有客观来源。✅"},{"id":"641f30ea","part":"马原","section":"","stem":"直观反应，在否定想象力。","answers":[],"raw":"直观反应，在否定想象力。","kind":"plain"},{"id":"84862a6c","part":"马原","section":"","stem":"规律=本质=必然=客观=真理 /// 能动=目的=选择=意识=主观","answers":[],"raw":"规律=本质=必然=客观=真理 /// 能动=目的=选择=意识=主观","kind":"plain"},{"id":"d013dc78","part":"马原","section":"","stem":"规律的必然性要通过条件才能得以显现","answers":["对"],"raw":"规律的必然性要通过条件才能得以显现","kind":"judge","src":"规律的必然性要通过条件才能得以显现。✅"},{"id":"7c97e755","part":"马原","section":"","stem":"凡是历史上出现过的规律，今后也必然发生","answers":["错"],"raw":"凡是历史上出现过的规律，今后也必然发生","kind":"judge","src":"凡是历史上出现过的规律，今后也必然发生。❌"},{"id":"1750c9e6","part":"马原","section":"","stem":"完善规律","answers":["错"],"raw":"完善规律","kind":"judge","src":"完善规律❌"},{"id":"944bf6ba","part":"马原","section":"","stem":"空间的观念随着认识的发展而发展","answers":["对"],"raw":"空间的观念随着认识的发展而发展","kind":"judge","src":"空间的观念随着认识的发展而发展。✅"},{"id":"feb4bd87","part":"马原","section":"","stem":"人工智能的实质是人类意识","answers":["错"],"raw":"人工智能的实质是人类意识","kind":"judge","src":"人工智能的实质是人类意识。❌"},{"id":"234704ce","part":"马原","section":"","stem":"人工智能的本质是物质（模仿意识的物质）","answers":["对"],"raw":"人工智能的本质是物质（模仿意识的物质）","kind":"judge","src":"人工智能的本质是物质（模仿意识的物质）。✅"},{"id":"6994fcbc","part":"马原","section":"","stem":"自在联系是客观的，人为联系是主观的","answers":["错"],"raw":"自在联系是客观的，人为联系是主观的","kind":"judge","src":"自在联系是客观的，人为联系是主观的。❌"},{"id":"df894839","part":"马原","section":"","stem":"主观臆断。","answers":[],"raw":"主观臆断。","kind":"plain"},{"id":"ad6658ba","part":"马原","section":"","stem":"随意创造联系","answers":["错"],"raw":"随意创造联系","kind":"judge","src":"随意创造联系❌（尊重规律是大前提）"},{"id":"94fb76de","part":"马原","section":"","stem":"任何事物可以随意联系","answers":["错"],"raw":"任何事物可以随意联系","kind":"judge","src":"任何事物可以随意联系。❌"},{"id":"76302fc5","part":"马原","section":"","stem":"任何事物必须通过中介联系","answers":["对"],"raw":"任何事物必须通过中介联系","kind":"judge","src":"任何事物必须通过中介联系。✅"},{"id":"b6e58400","part":"马原","section":"","stem":"任何事物都有无限多用的属性","answers":["对"],"raw":"任何事物都有无限多用的属性","kind":"judge","src":"任何事物都有无限多用的属性。✅"},{"id":"79aaa295","part":"马原","section":"","stem":"联系的基本趋势是发展","answers":["对"],"raw":"联系的基本趋势是发展","kind":"judge","src":"联系的基本趋势是发展。✅"},{"id":"dc01938e","part":"马原","section":"","stem":"整个世界都是过程的集合体","answers":["对"],"raw":"整个世界都是过程的集合体","kind":"judge","src":"整个世界都是过程的集合体。✅"},{"id":"11e8e67d","part":"马原","section":"","stem":"凡是存在的都应当灭亡","answers":["对"],"raw":"凡是存在的都应当灭亡","kind":"judge","src":"凡是存在的都应当灭亡。✅"},{"id":"4fd1606b","part":"马原","section":"","stem":"我们可以认识个性从而把握整个世界","answers":["对"],"raw":"我们可以认识个性从而把握整个世界","kind":"judge","src":"我们可以认识个性从而把握整个世界。✅"},{"id":"1300e762","part":"马原","section":"","stem":"归纳得到共性，演绎推出个性","answers":["对"],"raw":"归纳得到共性，演绎推出个性","kind":"judge","src":"归纳得到共性，演绎推出个性。✅"},{"id":"c5e79ea2","part":"马原","section":"","stem":"度是保持事物质不发生改变的量的范围","answers":["对"],"raw":"度是保持事物质不发生改变的量的范围","kind":"judge","src":"度是保持事物质不发生改变的量的范围✅"},{"id":"ce65a569","part":"马原","section":"","stem":"所有的现象都表现者本质，所有的本质都表现为现象","answers":["对"],"raw":"所有的现象都表现者本质，所有的本质都表现为现象","kind":"judge","src":"所有的现象都表现者本质，所有的本质都表现为现象✅"},{"id":"98a6d3da","part":"马原","section":"","stem":"必然决定偶然","answers":["错"],"raw":"必然决定偶然","kind":"judge","src":"必然决定偶然❌"},{"id":"81bb8442","part":"马原","section":"","stem":"必然支配偶然","answers":["对"],"raw":"必然支配偶然","kind":"judge","src":"必然支配偶然✅"},{"id":"c795621f","part":"马原","section":"","stem":"必然决定事物发展","answers":["对"],"raw":"必然决定事物发展","kind":"judge","src":"必然决定事物发展✅"},{"id":"1ead5939","part":"马原","section":"","stem":"凡事预则立，不预则废——原因结果","answers":["对"],"raw":"凡事预则立，不预则废——原因结果","kind":"judge","src":"凡事预则立，不预则废——原因结果✅"},{"id":"e50b5ae7","part":"马原","section":"","stem":"有其因必有其果","answers":["错"],"raw":"有其因必有其果","kind":"judge","src":"有其因必有其果❌"},{"id":"0565447e","part":"马原","section":"","stem":"推动不可能朝着可能转化","answers":["错"],"raw":"推动不可能朝着可能转化","kind":"judge","src":"推动不可能朝着可能转化❌"},{"id":"bbd26cc7","part":"马原","section":"","stem":"主客观辩证法是源和流的关系","answers":["错"],"raw":"主客观辩证法是源和流的关系","kind":"judge","src":"主客观辩证法是源和流的关系❌，本末❌"},{"id":"b08ff9f9","part":"马原","section":"","stem":"本末","answers":["错"],"raw":"本末","kind":"judge","src":"主客观辩证法是源和流的关系❌，本末❌"},{"id":"bd73b6d5","part":"马原","section":"","stem":"物质意识具有同一性","answers":["对"],"raw":"物质意识具有同一性","kind":"judge","src":"物质意识具有同一性✅"},{"id":"23eb733c","part":"马原","section":"","stem":"旧唯物主义不认可实践观点","answers":["对"],"raw":"旧唯物主义不认可实践观点","kind":"judge","src":"旧唯物主义不认可实践观点✅否认能动✅"},{"id":"fd927ee8","part":"马原","section":"","stem":"否认能动","answers":["对"],"raw":"否认能动","kind":"judge","src":"旧唯物主义不认可实践观点✅否认能动✅"},{"id":"b5ccb37e","part":"马原","section":"综合分析——本质、规律","stem":"实践客体是客观存在","answers":["错"],"raw":"实践客体是客观存在","kind":"judge","src":"实践客体是客观存在❌"},{"id":"b57396cb","part":"马原","section":"综合分析——本质、规律","stem":"实践是认识的先导","answers":["错"],"raw":"实践是认识的先导","kind":"judge","src":"实践是认识的先导❌指南❌"},{"id":"cea1cfb6","part":"马原","section":"综合分析——本质、规律","stem":"指南","answers":["错"],"raw":"指南","kind":"judge","src":"实践是认识的先导❌指南❌"},{"id":"f552868a","part":"马原","section":"综合分析——本质、规律","stem":"实践是从自发到自觉的过程","answers":["对"],"raw":"实践是从自发到自觉的过程","kind":"judge","src":"实践是从自发到自觉的过程。✅"},{"id":"91bb2d3b","part":"马原","section":"综合分析——本质、规律","stem":"实践/感性认识是认识过程的起点","answers":["对"],"raw":"实践/感性认识是认识过程的起点","kind":"judge","src":"实践/感性认识是认识过程的起点。✅"},{"id":"2fdc4a50","part":"马原","section":"综合分析——本质、规律","stem":"旧唯物认为意识是直观、被动、感性的反应","answers":["对"],"raw":"旧唯物认为意识是直观、被动、感性的反应","kind":"judge","src":"旧唯物认为意识是直观、被动、感性的反应。✅"},{"id":"6abde97f","part":"马原","section":"综合分析——本质、规律","stem":"理性认识比感性认识更高级","answers":["对"],"raw":"理性认识比感性认识更高级","kind":"judge","src":"理性认识比感性认识更高级。✅"},{"id":"f0eab805","part":"马原","section":"综合分析——本质、规律","stem":"二飞更重要，因为实践是认识的来源","answers":["错"],"raw":"二飞更重要，因为实践是认识的来源","kind":"judge","src":"二飞更重要，因为实践是认识的来源❌"},{"id":"54a8a670","part":"马原","section":"综合分析——本质、规律","stem":"科学实验是检验真理的标准","answers":["错"],"raw":"科学实验是检验真理的标准","kind":"judge","src":"科学实验是检验真理的标准。❌"},{"id":"35629605","part":"马原","section":"综合分析——本质、规律","stem":"认识是循环往复向前发展的","answers":["对"],"raw":"认识是循环往复向前发展的","kind":"judge","src":"认识是循环往复向前发展的。✅"},{"id":"c25efa51","part":"马原","section":"综合分析——本质、规律","stem":"真理是正确的理性认识","answers":["对"],"raw":"真理是正确的理性认识","kind":"judge","src":"真理是正确的理性认识✅"},{"id":"d4941fd8","part":"马原","section":"马原大题","stem":"物质和意识的关系：{{0}}","answers":["物质决定意识，意识具有能动的反作用，意识具有计划性目的性，具有创造性，能够指导实践，控制人的生理和心理活动。"],"raw":"物质和意识的关系：物质决定意识，意识具有能动的反作用，意识具有计划性目的性，具有创造性，能够指导实践，控制人的生理和心理活动。","kind":"cloze"},{"id":"9b1eaa72","part":"马原","section":"马原大题","stem":"规律和能动：{{0}}","answers":["尊重客观规律是正确发挥主观能动性的前提，只有充分发挥主观能动性才能正确认识和利用规律，实践是二者统一的基础。所以我们要尊重规律，实事求是的去实践，能动的利用规律改造客观世界。"],"raw":"规律和能动：尊重客观规律是正确发挥主观能动性的前提，只有充分发挥主观能动性才能正确认识和利用规律，实践是二者统一的基础。所以我们要尊重规律，实事求是的去实践，能动的利用规律改造客观世界。","kind":"cloze"},{"id":"db5bd1aa","part":"马原","section":"马原大题","stem":"联系（多因素，复杂）：{{0}}","answers":["联系是事物之间和事物内部的相互作用和影响，联系具有客观性，普遍性，多样性，条件性的特点，世界是一个普遍联系的整体，所以我们应该善于发现事物之间和其内部的联系，系统全面的看问题。"],"raw":"联系（多因素，复杂）：联系是事物之间和事物内部的相互作用和影响，联系具有客观性，普遍性，多样性，条件性的特点，世界是一个普遍联系的整体，所以我们应该善于发现事物之间和其内部的联系，系统全面的看问题。","kind":"cloze"},{"id":"d9df0b5f","part":"马原","section":"马原大题","stem":"同一性斗争性（转化）：{{0}}","answers":["同一性是指矛盾双方相互依存，相互贯通，一定条件相互转化的性质，是相对的；斗争性是指矛盾双方相互排斥相互分离斗争的性质，是绝对的；二者是对立统一的，同一性离不开斗争，斗争离不开统一，同一性是包含了差别的统一，斗争在表现统一，所以要在对立中把握统一，同一中把握对立。"],"raw":"同一性斗争性（转化）：同一性是指矛盾双方相互依存，相互贯通，一定条件相互转化的性质，是相对的；斗争性是指矛盾双方相互排斥相互分离斗争的性质，是绝对的；二者是对立统一的，同一性离不开斗争，斗争离不开统一，同一性是包含了差别的统一，斗争在表现统一，所以要在对立中把握统一，同一中把握对立。","kind":"cloze"},{"id":"3d5dbdda","part":"马原","section":"马原大题","stem":"普遍性和特殊性：{{0}}","answers":["普遍性是矛盾无处不在无时不有，特殊性是指不同情况下矛盾不同，二者是辩证统一的，普遍性是绝对的，特殊性是相对的，二者互相离不开，普遍性寓于特殊性之中，在一定条件相互转化，所以我们要承认矛盾，具体问题具体分析。"],"raw":"普遍性和特殊性：普遍性是矛盾无处不在无时不有，特殊性是指不同情况下矛盾不同，二者是辩证统一的，普遍性是绝对的，特殊性是相对的，二者互相离不开，普遍性寓于特殊性之中，在一定条件相互转化，所以我们要承认矛盾，具体问题具体分析。","kind":"cloze"},{"id":"7a529cae","part":"马原","section":"马原大题","stem":"普遍性特殊性的辩证关系：{{0}}","answers":["指出人认识的一般规律是从个别到一般再到个别的过程。"],"raw":"普遍性特殊性的辩证关系：指出人认识的一般规律是从个别到一般再到个别的过程。","kind":"cloze"},{"id":"24cb0186","part":"马原","section":"马原大题","stem":"矛盾的不平衡性：{{0}}","answers":["事物矛盾存在主要次要，根本非根本矛盾，根本矛盾贯穿事物始终，决定了事物的性质，主要矛盾的主要方面决定了事物的发展性质，所以我们要两点论，重点论的统一。"],"raw":"矛盾的不平衡性：事物矛盾存在主要次要，根本非根本矛盾，根本矛盾贯穿事物始终，决定了事物的性质，主要矛盾的主要方面决定了事物的发展性质，所以我们要两点论，重点论的统一。","kind":"cloze"},{"id":"cbedc683","part":"马原","section":"马原大题","stem":"必然偶然：{{0}}","answers":["必然是指事物发展过程中确定不移的趋势，偶然是指事物发展中不确定的趋势，二者是对立统一，必然藏在偶然的背后，通过大量的偶然表现出来，所有偶然背后都潜藏着必然。"],"raw":"必然偶然：必然是指事物发展过程中确定不移的趋势，偶然是指事物发展中不确定的趋势，二者是对立统一，必然藏在偶然的背后，通过大量的偶然表现出来，所有偶然背后都潜藏着必然。","kind":"cloze"},{"id":"27fbb4fe","part":"马原","section":"马原大题","stem":"辩证思维能力：{{0}}","answers":["我们要善于发现事物内部和事物之间的联系，用矛盾分析法去认识和解决问题，通过实践不断透过事物现象，触达事物本质，通过理性在认识和利用规律的基础上，去改造世界。（题目讲“启示”）"],"raw":"辩证思维能力：我们要善于发现事物内部和事物之间的联系，用矛盾分析法去认识和解决问题，通过实践不断透过事物现象，触达事物本质，通过理性在认识和利用规律的基础上，去改造世界。（题目讲“启示”）","kind":"cloze"},{"id":"f6927432","part":"马原","section":"马原大题","stem":"认识论（实践和认识，认识的过程，实践是{{0}}，真理，真理谬误，真理和s价值）","answers":["什么"],"raw":"认识论（实践和认识，认识的过程，实践是什么，真理，真理谬误，真理和s价值）","kind":"cloze"},{"id":"f0834531","part":"马原","section":"马原大题","stem":"实践：{{0}}","answers":["实践是人能动改造客观世界的社会物质性活动，具有客观，能动，社会历史性的特点，实践是物质世界二重分化的关键，是主客观的桥梁，所以我们应该尊重规律，使实践符合真理与价值尺度。"],"raw":"实践：实践是人能动改造客观世界的社会物质性活动，具有客观，能动，社会历史性的特点，实践是物质世界二重分化的关键，是主客观的桥梁，所以我们应该尊重规律，使实践符合真理与价值尺度。","kind":"cloze"},{"id":"bd33b549","part":"马原","section":"马原大题","stem":"实践和认识的关系：{{0}}","answers":["实践是xxx物质活动，认识是人在实践基础上对客观的能动反应，二者是辩证统一的，实践是认识的来源、目的、动力和检验真理认识的唯一标准，正确认识是实践的指南；所以要推动二者良性循环，相互促进。"],"raw":"实践和认识的关系：实践是xxx物质活动，认识是人在实践基础上对客观的能动反应，二者是辩证统一的，实践是认识的来源、目的、动力和检验真理认识的唯一标准，正确认识是实践的指南；所以要推动二者良性循环，相互促进。","kind":"cloze"},{"id":"44df0c09","part":"马原","section":"马原大题","stem":"认识的过程：{{0}}","answers":["人认识的过程是从实践到认识到实践，再认识在实践的过程，具有反复性和无限性的特点，所以人的认识是无限发展的，我们要通过拓宽实践渠道，加深发展对规律认识，从而更好的改造世界。"],"raw":"认识的过程：人认识的过程是从实践到认识到实践，再认识在实践的过程，具有反复性和无限性的特点，所以人的认识是无限发展的，我们要通过拓宽实践渠道，加深发展对规律认识，从而更好的改造世界。","kind":"cloze"},{"id":"b1963e74","part":"马原","section":"马原大题","stem":"感性认识和理性认识：{{0}}","answers":["感性认识是认识的初级阶段，具有直接性，具体，局限性特点，理性认识是认识的高级阶段，具有间接，抽象，深刻性特点；二者关系是辩证统一的，感性是理性的来源，所有的感性都有待成为理性，所以要大量实践，进行理性抽象的到对世界的真理认识，改造世界。"],"raw":"感性认识和理性认识：感性认识是认识的初级阶段，具有直接性，具体，局限性特点，理性认识是认识的高级阶段，具有间接，抽象，深刻性特点；二者关系是辩证统一的，感性是理性的来源，所有的感性都有待成为理性，所以要大量实践，进行理性抽象的到对世界的真理认识，改造世界。","kind":"cloze"},{"id":"9d8e57a8","part":"马原","section":"马原大题","stem":"真理的绝对性和相对性：{{0}}","answers":["真理的绝对性是指真理绝对主客观相符合，绝对无限发展，真理的相对性是指真理的广度和深度受限，二者是辩证统一的，二者相互包含，无数相对真理的碎片构成了绝对真理，任何相对真理都包含了真理的绝对颗粒，真理永远处于相对走向绝对的过程中，所以要坚持和发展真理。"],"raw":"真理的绝对性和相对性：真理的绝对性是指真理绝对主客观相符合，绝对无限发展，真理的相对性是指真理的广度和深度受限，二者是辩证统一的，二者相互包含，无数相对真理的碎片构成了绝对真理，任何相对真理都包含了真理的绝对颗粒，真理永远处于相对走向绝对的过程中，所以要坚持和发展真理。","kind":"cloze"},{"id":"58b60df3","part":"马原","section":"马原大题","stem":"真理和谬误：{{0}}","answers":["真理是指正确反应规律的认识，谬误是错误的认识，二者是对立统一的，真理和谬误有着明确的界限，二者的对立是绝对的，但真理和谬误的对立只有在有限范围内才有绝对意义，超出范围，二者可以相互转化，所以二者对立是相对的所以坚持实践检验真理，减少谬误。"],"raw":"真理和谬误： 真理是指正确反应规律的认识，谬误是错误的认识，二者是对立统一的，真理和谬误有着明确的界限，二者的对立是绝对的，但真理和谬误的对立只有在有限范围内才有绝对意义，超出范围，二者可以相互转化，所以二者对立是相对的所以坚持实践检验真理，减少谬误。","kind":"cloze"},{"id":"ea35e6b6","part":"马原","section":"马原大题","stem":"真理和价值：{{0}}","answers":["人类的实践活动要符合真理尺度和价值尺度，即合规律与合目的统一，要以符合规律为前提，在实践基础上认识利用规律，以满足人民要求为目的去改造世界。"],"raw":"真理和价值：人类的实践活动要符合真理尺度和价值尺度，即合规律与合目的统一，要以符合规律为前提，在实践基础上认识利用规律，以满足人民要求为目的去改造世界。","kind":"cloze"},{"id":"04c3f809","part":"马原","section":"马原大题","stem":"守正创新：{{0}}","answers":["是尊重真理的绝对相对性的体现，是对待理论的态度，守正是坚持规律，坚持真理，创新就是要破除陈规，守正是前提和基础，创新是目的。"],"raw":"守正创新：是尊重真理的绝对相对性的体现，是对待理论的态度，守正是坚持规律，坚持真理，创新就是要破除陈规，守正是前提和基础，创新是目的。","kind":"cloze"},{"id":"94dc57b3","part":"马原","section":"马原大题","stem":"理论创新和实践创新：{{0}}","answers":["实践创新是源泉动力，理论创新是指南，要推动二者良性循环，相互促进。"],"raw":"理论创新和实践创新：实践创新是源泉动力，理论创新是指南，要推动二者良性循环，相互促进。","kind":"cloze"},{"id":"17e4336a","part":"马原","section":"马原大题","stem":"科技双刃剑：{{0}}","answers":["科学技术是社会发展的重要动力，科技是第一生产力，其发展会带来生产方式，生活方式，思维方式的变革，推动社会跨越式发展，但科学技术有时会表现为异己敌对的力量，所以我们要让科技发展的实践活动，在符合规律的前提下，去满足人类自身的目的。"],"raw":"科技双刃剑：科学技术是社会发展的重要动力，科技是第一生产力，其发展会带来生产方式，生活方式，思维方式的变革，推动社会跨越式发展，但科学技术有时会表现为异己敌对的力量，所以我们要让科技发展的实践活动，在符合规律的前提下，去满足人类自身的目的。","kind":"cloze"}];
+
+const PARTS = ["马原", "毛中特·习思想", "史纲", "思想道德与法治", "形势与政策"];
+const PARTCLS = {"马原": "p1", "毛中特·习思想": "p2", "史纲": "p3", "思想道德与法治": "p4", "形势与政策": "p5"};
+const KEY = "zz_state_v1";
+const APPVER = "2026-10-14 · v12";
+
+/* ============================================================
+   状态
+   ============================================================ */
+function defCfg() {
+  return { parts: PARTS.slice(), scope: "today", mode: "cloze", newPerDay: 20 };
+}
+let cfg = defCfg();
+let st = {};          // { id: {ok:连对次数, bad:累计错, star:bool, seen:n} }
+let pool = [];
+let idx = 0;
+let revealed = {};    // 当前题已揭示的空
+let hinted = {};      // 当前题已给过提示的空
+let curMode = "cloze";
+let swapped = false;  // 反向模式：是否已看原题
+let choiceState = null; // 选词填空：{k, right, opts, picked}
+let judgeState = null;  // 判断题：{picked: "对"|"错"|null}
+let stat = { done: 0, ok: 0, bad: 0, lastDay: "", streak: 0, history: {} };
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    if (o && o.cfg) {
+      cfg = Object.assign(defCfg(), o.cfg);
+      if (!Array.isArray(cfg.parts) || !cfg.parts.length) cfg.parts = PARTS.slice();
+    }
+    if (o && o.st) st = o.st;
+    if (o && o.stat) stat = Object.assign(stat, o.stat);
+    migrateLegacy();
+  } catch (e) { }
+}
+/* 题库的 id 体系换过：老版本按 1、2、3… 编号，现在改成按内容算出来的短码。
+   这里把老编号底下的做题记录搬到新 id 上，只搬一次。 */
+function migrateLegacy() {
+  let moved = 0;
+  for (let i = 0; i < Q.length; i++) {
+    const q = Q[i];
+    if (!q.legacy) continue;
+    const old = st[q.legacy];
+    if (!old) continue;
+    if (!st[q.id]) {
+      st[q.id] = old;
+    } else {
+      const s = st[q.id];
+      s.ok = Math.max(s.ok || 0, old.ok || 0);
+      s.bad = (s.bad || 0) + (old.bad || 0);
+      s.star = !!s.star || !!old.star;
+      s.seen = Math.max(s.seen || 0, old.seen || 0);
+      if (old.due && (!s.due || old.due < s.due)) s.due = old.due;
+      s.ivl = Math.max(s.ivl || 0, old.ivl || 0);
+      s.reps = Math.max(s.reps || 0, old.reps || 0);
+      if (old.ef != null) s.ef = Math.min(s.ef == null ? 2.5 : s.ef, old.ef);
+    }
+    delete st[q.legacy];
+    moved++;
+  }
+  if (moved) save();
+  return moved;
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify({ cfg: cfg, st: st, stat: stat, v: 1 })); } catch (e) { }
+}
+function S(id) {
+  let s = st[id];
+  if (!s) return (st[id] = { ok: 0, bad: 0, star: false, seen: 0, ef: 2.5, ivl: 0, reps: 0, due: "" });
+  if (s.ef == null) s.ef = 2.5;
+  if (s.ivl == null) s.ivl = 0;
+  if (s.reps == null) s.reps = 0;
+  if (s.due == null) s.due = "";
+  return s;
+}
+function mastered(id) { const s = st[id]; return !!s && s.ok >= 2; }
+
+/* ============================================================
+   工具
+   ============================================================ */
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* ---------- 间隔重复调度（SM-2 简化版） ----------
+   ef  = 难度因子，初始 2.5，越低说明这题对你越难
+   ivl = 当前间隔（天）；reps = 连续答对次数；due = 下次该复习的日期
+   SRS_STEPS 是前几次答对后走的固定间隔，之后按 ef 增长 */
+const EF_MIN = 1.3;
+const MAX_IVL = 30;                       // 考试场景：间隔最长 30 天
+const SRS_STEPS = [1, 3, 8, 20, 50];
+
+function isNew(id) { const s = st[id]; return !s || !s.seen; }
+
+function dueToday(id) {
+  const s = st[id];
+  if (!s || !s.seen) return false;
+  return !s.due || s.due <= dayStr(0);
+}
+
+/* 已经逾期几天（没逾期返回 0） */
+function dueDelay(s) {
+  if (!s.due) return 0;
+  const a = new Date(s.due + "T00:00:00").getTime();
+  const b = new Date(dayStr(0) + "T00:00:00").getTime();
+  return Math.max(0, Math.round((b - a) / 86400000));
+}
+
+/* 间隔 → 掌握度星级，给用户看的"人话" */
+function masteryStars(i) {
+  if (!i || i <= 0) return 0;
+  if (i <= 1) return 1;
+  if (i <= 3) return 2;
+  if (i <= 10) return 3;
+  if (i <= 21) return 4;
+  return 5;
+}
+
+function starsHTML(n) {
+  let s = "";
+  for (let i = 0; i < 5; i++) s += i < n ? "★" : "☆";
+  return '<span class="st">' + s + "</span>";
+}
+
+function dueLineHTML(q) {
+  const s = S(q.id);
+  if (!s.seen) return '<div class="dueline"><span>第一次见 · 答对后 <b>1 天</b>再考你</span><span>难度 2.5</span></div>';
+  const d = dueDelay(s);
+  let when;
+  if (!s.due) when = "今天还会考你";
+  else if (s.due <= dayStr(0)) when = d > 0 ? ("已经逾期 <b>" + d + " 天</b>，今天就该复习") : "就是<b>今天</b>要复习的";
+  else when = "下次复习：<b>" + s.ivl + " 天后</b>";
+  return '<div class="dueline"><span>' + when + "</span><span>" + starsHTML(masteryStars(s.ivl)) + " 难度 " + s.ef.toFixed(2) + "</span></div>";
+}
+
+/* grade: 0=没记住, 1=记住了, 2=太简单 */
+function srsUpdate(s, grade) {
+  const base = Math.max(1, s.ivl || 1);
+  const delay = dueDelay(s);
+  if (!grade) {
+    s.reps = 0;
+    /* 复习过的题：保留两成间隔，别打回原形；新题第一次答错不扣难度因子 */
+    s.ivl = s.seen > 1 ? Math.max(1, Math.round(base * 0.2)) : 1;
+    if (s.seen > 1) s.ef = Math.max(EF_MIN, s.ef - 0.2);
+    s.due = dayStr(s.ivl);
+    return;
+  }
+  let next;
+  if (grade === 2) {
+    /* 太简单：跳过固定台阶，直接按难度因子放大 */
+    next = Math.round(base * s.ef * 1.3);
+    s.ef = Math.min(3.0, s.ef + 0.1);
+  } else if (s.reps < SRS_STEPS.length) {
+    next = SRS_STEPS[s.reps];
+  } else {
+    next = Math.round(base * s.ef);
+  }
+  if (delay > 0) next += Math.round(delay * 0.5);      // 逾期补偿：隔久了答对，下次可以更晚
+  next = Math.max(next, base + 1);                      // 答对了就绝不缩短间隔
+  next = Math.min(next, MAX_IVL);
+  s.reps++;
+  s.ivl = next;
+  s.due = dayStr(next);
+}
+
+/* 按钮上预告"下次几天后再见"，不改真实状态 */
+function ivlLabel(s, grade) {
+  const c = { ivl: s.ivl || 0, ef: s.ef || 2.5, reps: s.reps || 0, seen: s.seen || 1, due: s.due || "" };
+  srsUpdate(c, grade);
+  return c.ivl + " 天";
+}
+
+/* ---------- 每日打卡 ---------- */
+function dayStr(off) {
+  const d = new Date();
+  if (off) d.setDate(d.getDate() + off);
+  const p = function (n) { return (n < 10 ? "0" : "") + n; };
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+function touchDay() {
+  const today = dayStr(0);
+  if (stat.lastDay === today) return;
+  stat.streak = (stat.lastDay === dayStr(-1)) ? ((stat.streak || 0) + 1) : 1;
+  stat.lastDay = today;
+}
+
+function todayCount() {
+  const cand = Q.filter(function (x) { return cfg.parts.indexOf(x.part) >= 0; });
+  const due = cand.filter(function (x) { return dueToday(x.id); }).length;
+  const fresh = cand.filter(function (x) { return isNew(x.id); }).length;
+  const lim = (cfg.newPerDay == null ? 20 : cfg.newPerDay);
+  return { due: due, fresh: fresh, take: Math.min(fresh, lim), todo: due + Math.min(fresh, lim) };
+}
+
+function dailyHTML() {
+  const c = todayCount();
+  const n = stat.streak || 0;
+  const doneToday = stat.lastDay === dayStr(0);
+  if (!c.todo) {
+    return '<div class="daily ok">🎉 今天的量已经刷完了' +
+      (n ? " · 连续 " + n + " 天" : "") +
+      '<span class="go" id="dGo">随便刷刷</span></div>';
+  }
+  return '<div class="daily' + (doneToday ? " ok" : "") + '">' +
+    (doneToday ? "✅ 今天练过了 · " : "<b>今日任务</b> · ") +
+    '<span class="dtag">复习 ' + c.due + "</span>" +
+    '<span class="dtag">新学 ' + c.take + "</span>" +
+    '<span class="dtag">约 ' + Math.max(1, Math.round(c.todo * 18 / 60)) + " 分钟</span>" +
+    (n ? " · 连续 " + n + " 天" : "") +
+    '<span class="go" id="dGo">' + (doneToday ? "再练一组" : "开始 →") + "</span></div>";
+}
+
+function startTodo() {
+  cfg.scope = "today";
+  pool = buildPool();
+  save();
+  if (!pool.length) { renderEmpty(); return; }
+  goTo(0);
+}
+function blankLen(ans) { return "&nbsp;"; }
+
+/* 提示：只露前两个字，够想起就行 */
+function hintText(ans) {
+  const s = String(ans == null ? "" : ans);
+  if (s.length <= 2) return s;
+  return s.slice(0, 2) + "…";
+}
+
+/* ============================================================
+   组卷
+   ============================================================ */
+/* 出题方式选了「判断题」时，题池里只留判断题 */
+function kindOK(x) {
+  return cfg.mode !== "judge" || x.kind === "judge";
+}
+
+function buildTodo() {
+  const cand = Q.filter(function (x) { return cfg.parts.indexOf(x.part) >= 0 && kindOK(x); });
+  const due = shuffle(cand.filter(function (x) { return dueToday(x.id); }));
+  const fresh = shuffle(cand.filter(function (x) { return isNew(x.id); }));
+  const lim = (cfg.newPerDay == null ? 20 : cfg.newPerDay);
+  return due.concat(fresh.slice(0, lim));
+}
+
+function buildPool() {
+  if (cfg.scope === "today") return buildTodo();
+  let arr = Q.filter(function (x) { return cfg.parts.indexOf(x.part) >= 0 && kindOK(x); });
+  if (cfg.scope === "todo") arr = arr.filter(function (x) { return !mastered(x.id); });
+  else if (cfg.scope === "weak") arr = arr.filter(function (x) { const s = st[x.id]; return s && s.bad > 0 && !mastered(x.id); });
+  else if (cfg.scope === "star") arr = arr.filter(function (x) { const s = st[x.id]; return s && s.star; });
+  return shuffle(arr.slice());
+}
+
+function pickMode(q) {
+  if (q.kind === "judge") return "judge";     // 判断题只有这一种考法
+  if (cfg.mode === "mix") {
+    if (!q.answers || !q.answers.length) return Math.random() < 0.5 ? "cloze" : "reverse";
+    /* 按熟练度升难度：没对过给选项 → 对过挖空 → 熟了反向想题 */
+    const s = st[q.id];
+    const ok = (!s || !s.seen) ? 0 : (s.ok || 0);
+    if (ok <= 0) return "choice";
+    if (ok <= 2) return "cloze";
+    return "reverse";
+  }
+  if ((cfg.mode === "reverse" || cfg.mode === "choice") && (!q.answers || !q.answers.length)) return "cloze";
+  return cfg.mode;
+}
+
+/* ============================================================
+   渲染
+   ============================================================ */
+const $main = document.getElementById("main");
+const $foot = document.getElementById("footer");
+
+function goTo(n) {
+  if (!pool.length) { render(); return; }
+  const len = pool.length;
+  idx = ((n % len) + len) % len;
+  revealed = {};
+  hinted = {};
+  swapped = false;
+  choiceState = null;
+  judgeState = null;
+  curMode = pickMode(pool[idx]);
+  render();
+}
+
+function render() {
+  if (!pool.length) { renderEmpty(); return; }
+  if (idx >= pool.length) idx = 0;
+  const q = pool[idx];
+  if (curMode !== "reverse" && curMode !== "cloze" && curMode !== "choice" && curMode !== "judge") curMode = "cloze";
+
+  const total = pool.length;
+  document.getElementById("barFill").style.width = ((idx + 1) / total * 100) + "%";
+  document.getElementById("hdrSub").textContent = (idx + 1) + "/" + total + " · " + scopeName();
+  document.getElementById("btnStar").textContent = S(q.id).star ? "★" : "☆";
+  document.getElementById("btnStar").style.color = S(q.id).star ? "var(--amber)" : "var(--tx2)";
+
+  let body = "";
+  body += '<div class="meta">';
+  const secShow = (curMode === "choice") ? "" : (q.section ? " · " + esc(q.section) : "");
+  body += '<span class="tag ' + (PARTCLS[q.part] || "") + '">' + esc(q.part) + secShow + "</span>";
+  body += '<span class="num">#' + q.id + "</span>";
+  body += "</div>";
+
+  if (curMode === "reverse" && q.answers && q.answers.length) {
+    body += '<div class="stem rev">' + esc(q.answers.join("　/　")) + "</div>";
+    body += '<div class="reveal-tip" id="tip">' + (swapped ? "" : "这是哪一条的答案？想好点「看原题」") + "</div>";
+    if (swapped) {
+      body += '<div class="legend" style="display:block;margin-top:14px">' + esc(q.raw) + "</div>";
+    }
+    if (q.answers.length > 1) {
+      body += '<div class="reveal-tip">（这条有 ' + q.answers.length + " 个空）</div>";
+    }
+  } else if (curMode === "choice" && q.answers && q.answers.length) {
+    if (!choiceState) choiceState = makeChoice(q);
+    body += '<div class="stem" id="stem">' + choiceStem(q, choiceState.k) + "</div>";
+    body += '<div class="opts" id="opts">';
+    for (let i = 0; i < choiceState.opts.length; i++) {
+      const t = choiceState.opts[i];
+      let cls = "opt";
+      if (choiceState.picked) {
+        if (t === choiceState.right) cls += " right";
+        else if (t === choiceState.picked) cls += " wrong";
+        else cls += " dim";
+      }
+      body += '<button class="' + cls + '" data-opt="' + i + '">' + esc(t) + "</button>";
+    }
+    body += "</div>";
+    if (choiceState.picked) {
+      body += '<div class="reveal-tip">' +
+        (choiceState.picked === choiceState.right ? "✅ 选对了" : "❌ 选错了，正确答案是上面绿色的那个") + "</div>";
+    } else {
+      body += '<div class="reveal-tip">从下面 4 个里选一个填进去</div>';
+    }
+  } else if (curMode === "judge") {
+    if (!judgeState) judgeState = { picked: null };
+    const right = q.answers[0];
+    body += '<div class="stem" id="stem">' + esc(q.stem) + "</div>";
+    body += '<div class="opts jd" id="opts">';
+    ["对", "错"].forEach(function (v) {
+      let cls = "opt";
+      if (judgeState.picked) {
+        if (v === right) cls += " right";
+        else if (v === judgeState.picked) cls += " wrong";
+        else cls += " dim";
+      }
+      body += '<button class="' + cls + '" data-jd="' + v + '">' + (v === "对" ? "√ 对" : "× 错") + "</button>";
+    });
+    body += "</div>";
+    if (judgeState.picked) {
+      const ok = judgeState.picked === right;
+      body += '<div class="reveal-tip">' +
+        (ok ? "✅ 判断正确" : "❌ 判断错了 —— 这句话是「" + right + "」的") + "</div>";
+      if (q.src && q.src !== q.stem) {
+        body += '<div class="legend" style="display:block;margin-top:12px">原文：' + esc(q.src) + "</div>";
+      }
+    } else {
+      body += '<div class="reveal-tip">这句话是对的还是错的？</div>';
+    }
+  } else {
+    body += '<div class="stem" id="stem">' + stemHTML(q) + "</div>";
+    if (!q.answers || !q.answers.length) {
+      body += '<div class="plain-note">这条是<b>整句记忆</b>：没有可挖的关键词，直接把它当一句话背下来。</div>';
+    }
+    body += '<div class="reveal-tip">点虚线处给个提示，再点一下看答案</div>';
+  }
+
+  const showDue = curMode === "reverse" ? swapped
+    : curMode === "choice" ? !!(choiceState && choiceState.picked)
+      : curMode === "judge" ? !!(judgeState && judgeState.picked)
+        : Object.keys(revealed).length > 0;
+  $main.innerHTML = dailyHTML() + '<div class="card">' + body +
+    (showDue ? dueLineHTML(q) : "") + "</div>";
+  const dgo = document.getElementById("dGo");
+  if (dgo) dgo.onclick = startTodo;
+  bindBlanks(q);
+  bindOpts();
+  renderFooter(q);
+}
+
+/* 给答案按“长相”分类：干扰项必须同型，否则一眼就能排除 */
+function ansType(s) {
+  s = String(s).trim();
+  if (/^《/.test(s)) return "book";
+  if (/\d{4}\s*年/.test(s)) return "year";
+  if (/^[①②③④⑤⑥]/.test(s)) return "flow";
+  if (/^\d+(\.\d+)?\s*(%|年|次|个|项|条|天|届)?$/.test(s)) return "num";
+  if (s.length <= 6) return "term";
+  return "phrase";
+}
+
+function makeChoice(q) {
+  const k = Math.floor(Math.random() * q.answers.length);
+  const right = String(q.answers[k]).trim();
+  const rt = ansType(right);
+  const R = right.length;
+  const seen = {};
+  const cand = [];
+  for (let i = 0; i < Q.length; i++) {
+    const o = Q[i];
+    if (o.part !== q.part) continue;
+    const sameSec = (q.section && o.section === q.section) ? 1 : 0;
+    for (let j = 0; j < o.answers.length; j++) {
+      const t = String(o.answers[j]).trim();
+      if (!t || t === right || seen[t]) continue;
+      if (t.indexOf(right) >= 0 || right.indexOf(t) >= 0) continue;
+      if (ansType(t) !== rt) continue;
+      const d = Math.abs(t.length - R);
+      if (d > Math.max(4, Math.round(R * 0.55))) continue;
+      seen[t] = 1;
+      cand.push({ t: t, sc: sameSec * 6 - d * 1.5 + Math.random() * 2 });
+    }
+  }
+  cand.sort(function (a, b) { return b.sc - a.sc; });
+  const opts = [right];
+  // 只在得分最高的前 10 个里挑，且每次随机 —— 既保证迷惑性，又不会每次都一样
+  const pool = cand.slice(0, 10);
+  while (opts.length < 4 && pool.length) {
+    const i = Math.floor(Math.random() * pool.length);
+    opts.push(pool[i].t);
+    pool.splice(i, 1);
+  }
+  // 同型的实在不够，才放宽到“只要求长度接近”，保证至少 3 个选项
+  if (opts.length < 3) {
+    const loose = [];
+    for (let i = 0; i < Q.length; i++) {
+      const o = Q[i];
+      if (o.part !== q.part) continue;
+      for (let j = 0; j < o.answers.length; j++) {
+        const t = String(o.answers[j]).trim();
+        if (t && t !== right && t.length >= 2 && Math.abs(t.length - R) <= 3 && opts.indexOf(t) < 0 && loose.indexOf(t) < 0) loose.push(t);
+      }
+      if (loose.length >= 30) break;
+    }
+    while (opts.length < 4 && loose.length) {
+      const i = Math.floor(Math.random() * loose.length);
+      opts.push(loose[i]);
+      loose.splice(i, 1);
+    }
+  }
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = opts[i]; opts[i] = opts[j]; opts[j] = tmp;
+  }
+  return { k: k, right: right, opts: opts, picked: null };
+}
+
+function choiceStem(q, k) {
+  let s = esc(q.stem);
+  s = s.replace(/\{\{(\d+)\}\}/g, function (m, i) {
+    const n = parseInt(i, 10);
+    if (n === k) return '<span class="blank">&nbsp;</span>';
+    return '<span class="filled">' + esc(q.answers[n] || "") + "</span>";
+  });
+  return s;
+}
+
+function bindOpts() {
+  const box = document.getElementById("opts");
+  if (!box) return;
+  const btns = box.querySelectorAll(".opt");
+  if (curMode === "judge") {
+    if (!judgeState || judgeState.picked) return;
+    for (let i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function () {
+        pickJudge(this.getAttribute("data-jd"));
+      });
+    }
+    return;
+  }
+  if (curMode !== "choice" || !choiceState || choiceState.picked) return;
+  for (let i = 0; i < btns.length; i++) {
+    btns[i].addEventListener("click", function () {
+      pickOpt(parseInt(this.getAttribute("data-opt"), 10));
+    });
+  }
+}
+
+/* 判断题：对 / 错，答对算「记住了」，答错算「没记住」，照样进错题本和复习计划 */
+function pickJudge(v) {
+  if (!judgeState || judgeState.picked) return;
+  const q = pool[idx];
+  judgeState.picked = v;
+  applyMark(q, v === q.answers[0] ? 1 : 0);
+  render();
+}
+
+function pickOpt(i) {
+  if (!choiceState || choiceState.picked) return;
+  const q = pool[idx];
+  choiceState.picked = choiceState.opts[i];
+  applyMark(q, choiceState.picked === choiceState.right);
+  render();
+}
+
+function stemHTML(q) {
+  let s = esc(q.stem);
+  s = s.replace(/\{\{(\d+)\}\}/g, function (m, i) {
+    const n = parseInt(i, 10);
+    const ans = (q.answers && q.answers[n] != null) ? q.answers[n] : "";
+    if (revealed[n]) return '<span class="blank on">' + esc(ans) + "</span>";
+    if (hinted[n]) return '<span class="blank hint" data-i="' + n + '">' + esc(hintText(ans)) + "</span>";
+    return '<span class="blank" data-i="' + n + '">' + blankLen(ans) + "</span>";
+  });
+  return s;
+}
+
+function bindBlanks(q) {
+  const list = $main.querySelectorAll(".blank[data-i]");
+  for (let i = 0; i < list.length; i++) {
+    list[i].addEventListener("click", function () {
+      const n = parseInt(this.getAttribute("data-i"), 10);
+      const ans = q.answers[n];
+      if (!hinted[n] && !revealed[n]) {      // 第一下只给提示（前两个字）
+        hinted[n] = true;
+        this.textContent = hintText(ans);
+        this.className = "blank hint";
+        return;
+      }
+      revealed[n] = true;
+      this.textContent = ans;
+      this.className = "blank on";
+      if (Object.keys(revealed).length >= q.answers.length) renderFooter(q);
+    });
+  }
+}
+
+function renderFooter(q) {
+  if (curMode === "choice" && q.answers && q.answers.length) {
+    if (!choiceState || !choiceState.picked) {
+      $foot.innerHTML =
+        '<button class="btn sm" id="bSkip">跳过</button>' +
+        '<button class="btn primary" id="bShow">不会，看答案</button>';
+      document.getElementById("bShow").onclick = function () {
+        if (choiceState) choiceState.picked = "\u0000";
+        applyMark(q, 0);
+        render();
+      };
+      document.getElementById("bSkip").onclick = skip;
+    } else {
+      $foot.innerHTML = '<button class="btn primary" id="bNext">下一题 →</button>';
+      document.getElementById("bNext").onclick = next;
+    }
+    return;
+  }
+
+  if (curMode === "judge") {
+    if (!judgeState || !judgeState.picked) {
+      $foot.innerHTML =
+        '<button class="btn sm" id="bSkip">跳过</button>' +
+        '<button class="btn primary" id="bShow">不会，看答案</button>';
+      document.getElementById("bShow").onclick = function () {
+        judgeState.picked = "\u0000";
+        applyMark(q, 0);
+        render();
+      };
+      document.getElementById("bSkip").onclick = skip;
+    } else {
+      $foot.innerHTML = '<button class="btn primary" id="bNext">下一题 →</button>';
+      document.getElementById("bNext").onclick = next;
+    }
+    return;
+  }
+
+  const anyReveal = curMode === "reverse" ? swapped : Object.keys(revealed).length > 0;
+  const allReveal = curMode === "reverse" ? swapped : (q.answers && q.answers.length && Object.keys(revealed).length >= q.answers.length);
+
+  if (!q.answers || !q.answers.length) {
+    // 整句记忆：直接给判断按钮
+    const s1 = S(q.id);
+    $foot.innerHTML =
+      '<button class="btn no" id="bNo">没记住<small>' + ivlLabel(s1, 0) + "</small></button>" +
+      '<button class="btn ok" id="bOk">记住了<small>' + ivlLabel(s1, 1) + "</small></button>" +
+      '<button class="btn easy" id="bEasy">太简单<small>' + ivlLabel(s1, 2) + "</small></button>";
+    document.getElementById("bOk").onclick = function () { mark(1); };
+    document.getElementById("bNo").onclick = function () { mark(0); };
+    document.getElementById("bEasy").onclick = function () { mark(2); };
+    return;
+  }
+
+  if (!anyReveal) {
+    $foot.innerHTML =
+      '<button class="btn sm" id="bSkip">跳过</button>' +
+      '<button class="btn primary" id="bShow">' + (curMode === "reverse" ? "看原题" : "看答案") + "</button>";
+    document.getElementById("bShow").onclick = function () { revealAll(q); };
+    document.getElementById("bSkip").onclick = function () { skip(); };
+    return;
+  }
+
+  const s2 = S(q.id);
+  $foot.innerHTML =
+    '<button class="btn no" id="bNo">没记住<small>' + ivlLabel(s2, 0) + "</small></button>" +
+    (allReveal ? "" : '<button class="btn sm" id="bMore">全看</button>') +
+    '<button class="btn ok" id="bOk">记住了<small>' + ivlLabel(s2, 1) + "</small></button>" +
+    '<button class="btn easy" id="bEasy">太简单<small>' + ivlLabel(s2, 2) + "</small></button>";
+  document.getElementById("bOk").onclick = function () { mark(1); };
+  document.getElementById("bNo").onclick = function () { mark(0); };
+  document.getElementById("bEasy").onclick = function () { mark(2); };
+  const more = document.getElementById("bMore");
+  if (more) more.onclick = function () { revealAll(q); };
+}
+
+function revealAll(q) {
+  if (curMode === "reverse") { swapped = true; render(); return; }
+  if (curMode === "choice") { if (choiceState) choiceState.picked = "\u0000"; render(); return; }
+  if (curMode === "judge") { if (judgeState) judgeState.picked = "\u0000"; render(); return; }
+  if (q.answers) for (let i = 0; i < q.answers.length; i++) revealed[i] = true;
+  render();
+}
+
+function renderEmpty() {
+  document.getElementById("barFill").style.width = "0%";
+  document.getElementById("hdrSub").textContent = "";
+  $main.innerHTML = dailyHTML() + '<div class="empty">这一批已经抽完啦 🎉<br><br>去 ⚙ 里换个范围，或者<br>清空进度重新来一轮。</div>';
+  const dgo2 = document.getElementById("dGo");
+  if (dgo2) dgo2.onclick = startTodo;
+  $foot.innerHTML = '<button class="btn primary" id="bSet">打开设置</button>';
+  document.getElementById("bSet").onclick = openSheet;
+}
+
+function scopeName() {
+  const m = { today: "今日任务", all: "全部随机", todo: "只抽没掌握的", weak: "只抽错过的", star: "只抽错题本" };
+  return m[cfg.scope] || "";
+}
+
+function heatHTML() {
+  const H = stat.history || {};
+  const cells = [];
+  for (let i = 55; i >= 0; i--) {
+    const d = dayStr(-i);
+    const n = H[d] || 0;
+    let lv = 0;
+    if (n > 0) lv = 1;
+    if (n >= 10) lv = 2;
+    if (n >= 25) lv = 3;
+    if (n >= 50) lv = 4;
+    cells.push('<i class="h' + lv + '" title="' + d + " · " + n + ' 道"></i>');
+  }
+  return '<div class="heat">' + cells.join("") + "</div>";
+}
+
+function forecastHTML() {
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = dayStr(i);
+    const n = Q.filter(function (x) {
+      const s = st[x.id];
+      if (!s || !s.seen || !s.due) return false;
+      if (cfg.parts.indexOf(x.part) < 0) return false;
+      return i === 0 ? (s.due <= d) : (s.due === d);
+    }).length;
+    days.push({ d: d.slice(5), n: n, i: i });
+  }
+  const max = Math.max(1, Math.max.apply(null, days.map(function (x) { return x.n; })));
+  const lab = ["今天", "明天", "后天"];
+  return '<div class="fc">' + days.map(function (x) {
+    const h = Math.round(x.n / max * 100);
+    return '<div class="fcb' + (x.i === 0 ? " today" : "") + '"><b>' + (x.n || "·") + "</b>" +
+      '<i style="height:' + h + '%"></i>' +
+      "<small>" + (lab[x.i] || x.d) + "</small></div>";
+  }).join("") + "</div>";
+}
+
+/* ============================================================
+   答题
+   ============================================================ */
+function applyMark(q, grade) {
+  touchDay();
+  const good = grade > 0;
+  const s = S(q.id);
+  s.seen++;
+  srsUpdate(s, grade);
+  if (good) {
+    const times = (grade === 2) ? 2 : 1;    // 「太简单」算两次，升级更快
+    for (let i = 0; i < times; i++) s.ok++;
+    if (s.ok >= 2) s.star = false;
+  } else { s.ok = 0; s.bad++; s.star = true; }
+  stat.done++; if (good) stat.ok++; else stat.bad++;
+  if (!stat.history) stat.history = {};
+  const dkey = dayStr(0);
+  stat.history[dkey] = (stat.history[dkey] || 0) + 1;
+  save();
+}
+
+function mark(grade) {
+  applyMark(pool[idx], grade);
+  next();
+}
+
+function skip() {
+  next();
+}
+
+function next() {
+  if (!pool.length) { render(); return; }
+  const n = idx + 1;
+  if (n < pool.length) { goTo(n); return; }
+  if (cfg.scope !== "all") {
+    // 非「全部随机」：抽完一轮就重算题池（刚标记成掌握的会被剔除）
+    pool = buildPool();
+    if (!pool.length) { renderEmpty(); return; }
+    goTo(0);
+    return;
+  }
+  goTo(0);
+}
+
+/* ============================================================
+   设置面板
+   ============================================================ */
+const $sheet = document.getElementById("sheet");
+const $mask = document.getElementById("mask");
+
+function openSheet() {
+  renderSheet();
+  $sheet.classList.add("on");
+  $mask.classList.add("on");
+}
+function closeSheet() {
+  $sheet.classList.remove("on");
+  $mask.classList.remove("on");
+  pool = buildPool(); save(); goTo(0);
+}
+$mask.onclick = closeSheet;
+document.getElementById("btnSet").onclick = openSheet;
+document.getElementById("btnClose").onclick = closeSheet;
+document.getElementById("btnBack").onclick = closeSheet;
+document.getElementById("btnReset").onclick = function () {
+  if (!confirm("清空全部做题进度？题目本身不会丢，只是标记和统计归零。")) return;
+  st = {}; stat = { done: 0, ok: 0, bad: 0, lastDay: "", streak: 0 };
+  save(); renderSheet();
+};
+document.getElementById("btnStar").onclick = function () {
+  if (!pool.length) return;
+  const q = pool[idx];
+  const s = S(q.id);
+  s.star = !s.star;
+  save();
+  document.getElementById("btnStar").textContent = s.star ? "★" : "☆";
+  document.getElementById("btnStar").style.color = s.star ? "var(--amber)" : "var(--tx2)";
+};
+
+function renderSheet() {
+  // 板块
+  const sp = document.getElementById("segParts");
+  sp.innerHTML = PARTS.map(function (p) {
+    const n = Q.filter(function (x) { return x.part === p; }).length;
+    const on = cfg.parts.indexOf(p) >= 0;
+    return '<button data-p="' + esc(p) + '" class="' + (on ? "on" : "") + '">' + esc(p) + " <small style='opacity:.6'>" + n + "</small></button>";
+  }).join("");
+  const btns = sp.querySelectorAll("button");
+  for (let i = 0; i < btns.length; i++) {
+    btns[i].onclick = function () {
+      const p = this.getAttribute("data-p");
+      const k = cfg.parts.indexOf(p);
+      if (k >= 0) { if (cfg.parts.length > 1) cfg.parts.splice(k, 1); }
+      else cfg.parts.push(p);
+      save(); renderSheet();
+    };
+  }
+  // 范围 / 方式
+  markSeg("segScope", cfg.scope);
+  markSeg("segMode", cfg.mode);
+  markSeg("segNew", cfg.newPerDay == null ? 20 : cfg.newPerDay);
+  // 统计
+  const total = Q.length;
+  const m = Q.filter(function (x) { return mastered(x.id); }).length;
+  const star = Q.filter(function (x) { return st[x.id] && st[x.id].star; }).length;
+  const wrong = Q.filter(function (x) { return st[x.id] && st[x.id].bad > 0; }).length;
+  const seen = Q.filter(function (x) { return st[x.id] && st[x.id].seen > 0; }).length;
+  document.getElementById("bigstat").innerHTML =
+    "<div><b>" + m + "</b><small>已掌握</small></div>" +
+    "<div><b>" + seen + "</b><small>做过的</small></div>" +
+    "<div><b>" + star + "</b><small>错题本</small></div>" +
+    "<div><b>" + (stat.streak || 0) + "</b><small>连续天数</small></div>";
+  document.getElementById("statBox").innerHTML = PARTS.map(function (p) {
+    const all = Q.filter(function (x) { return x.part === p; });
+    const ok = all.filter(function (x) { return mastered(x.id); }).length;
+    const pc = all.length ? Math.round(ok / all.length * 100) : 0;
+    return '<div class="line"><span>' + esc(p) + '</span><span class="track"><i style="width:' + pc + '%"></i></span><b>' + ok + "/" + all.length + "</b></div>";
+  }).join("");
+  document.getElementById("forecastBox").innerHTML =
+    '<div class="slabel">最近 8 周（每格一天，颜色越深练得越多）</div>' + heatHTML() +
+    '<div class="slabel">未来 7 天要复习的量</div>' + forecastHTML();
+  document.getElementById("hintBox").innerHTML =
+    "共 " + total + " 条题、" + Q.reduce(function (a, x) { return a + (x.answers ? x.answers.length : 0); }, 0) + " 个空。<br>" +
+    "连对 2 次算「已掌握」；答错会自动进错题本，之后连对 2 次自动移出。<br>" +
+    "做过的题：" + seen + " 条，累计答错 " + wrong + " 条。<br>" +
+    "连续打卡 " + (stat.streak || 0) + " 天，最后一次练习：" + (stat.lastDay || "还没开始") + "。<br>" +
+    '<span style="opacity:.5">版本 ' + APPVER + "</span>";
+}
+
+const SEGKEY = { segScope: "scope", segMode: "mode", segNew: "newPerDay" };
+
+function markSeg(id, v) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  const btns = box.querySelectorAll("button");
+  const key = SEGKEY[id] || "mode";
+  for (let i = 0; i < btns.length; i++) {
+    const on = String(btns[i].getAttribute("data-v")) === String(v);
+    btns[i].className = on ? "on" : "";
+    btns[i].onclick = function () {
+      const raw = this.getAttribute("data-v");
+      cfg[key] = (key === "newPerDay") ? parseInt(raw, 10) : raw;
+      save(); renderSheet();
+    };
+  }
+}
+
+/* ============================================================
+   手势：左右滑动切题
+   ============================================================ */
+let tx = 0, ty = 0, tt = 0;
+document.addEventListener("touchstart", function (e) {
+  if (e.touches.length !== 1) return;
+  tx = e.touches[0].clientX; ty = e.touches[0].clientY; tt = Date.now();
+}, { passive: true });
+document.addEventListener("touchend", function (e) {
+  if (e.changedTouches.length !== 1) return;
+  const dx = e.changedTouches[0].clientX - tx;
+  const dy = e.changedTouches[0].clientY - ty;
+  const dt = Date.now() - tt;
+  if (dt > 600 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+  if (document.getElementById("sheet").classList.contains("on")) return;
+  if (dx < 0) { goTo(idx + 1); }        // 左滑下一题
+  else { goTo(idx - 1); }               // 右滑上一题
+}, { passive: true });
+
+/* ============================================================
+   启动
+   ============================================================ */
+load();
+const _q = new URLSearchParams(location.search);
+if (_q.get("mode")) cfg.mode = _q.get("mode");
+pool = buildPool();
+if (_q.get("i")) idx = Math.max(0, Math.min(pool.length - 1, parseInt(_q.get("i"), 10) || 0));
+goTo(idx);
+if (_q.get("reveal") === "1" && pool.length) revealAll(pool[idx]);
+
+// 离线缓存
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").then(function (reg) {
+      // 每次打开都主动问一次服务器有没有新版，别等浏览器自己想起来
+      reg.update().catch(function () { });
+    }).catch(function () { });
+    let hadCtrl = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (!hadCtrl) return; // 首次安装不刷新，避免闪一下
+      hadCtrl = false;
+      location.reload();
+    });
+  });
+}
+</script>
+</body>
+</html>
